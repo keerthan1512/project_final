@@ -1,0 +1,173 @@
+import React, { useState } from 'react';
+import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
+
+interface FileUploadProps {
+  title: string;
+  description: string;
+  acceptedTypes?: string;
+  maxSize?: number; // in MB
+}
+
+export default function FileUpload({ 
+  title, 
+  description, 
+  acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
+  maxSize = 10 
+}: FileUploadProps) {
+  const [dragActive, setDragActive] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string>("");
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const validateFile = (file: File): boolean => {
+    if (file.size > maxSize * 1024 * 1024) {
+      setError(`File size must be less than ${maxSize}MB`);
+      return false;
+    }
+    
+    const fileType = file.name.split('.').pop()?.toLowerCase();
+    const validTypes = acceptedTypes.split(',').map(type => type.replace('.', ''));
+    
+    if (!fileType || !validTypes.includes(fileType)) {
+      setError(`Invalid file type. Accepted types: ${acceptedTypes}`);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    setError("");
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const validFiles = droppedFiles.filter(validateFile);
+    setFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setError("");
+
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      const validFiles = selectedFiles.filter(validateFile);
+      setFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert('Files uploaded successfully!');
+        setFiles([]);
+      } else {
+        const errorData = await response.json();
+        setError(`Upload failed: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      setError(`Upload failed: ${error.message}`);
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <div
+        className={`relative border-2 border-dashed rounded-lg p-8 text-center ${
+          dragActive ? 'border-blue-500 bg-blue-50/10' : 'border-gray-600'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          type="file"
+          multiple
+          className="hidden"
+          accept={acceptedTypes}
+          onChange={handleChange}
+          id="file-upload"
+        />
+
+        <label
+          htmlFor="file-upload"
+          className="flex flex-col items-center cursor-pointer"
+        >
+          <Upload className="w-12 h-12 text-blue-500 mb-4" />
+          <h3 className="text-xl font-bold mb-2">{title}</h3>
+          <p className="text-gray-400 mb-4">{description}</p>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+            Select Files
+          </button>
+          {files.length > 0 && (
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4"
+              onClick={handleUpload}
+            >
+              Upload Files
+            </button>
+          )}
+        </label>
+      </div>
+
+      {error && (
+        <div className="mt-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-center gap-2">
+          <AlertCircle className="text-red-500" />
+          <p className="text-red-500">{error}</p>
+        </div>
+      )}
+
+      {files.length > 0 && (
+        <div className="mt-6 space-y-3">
+          <h4 className="font-semibold">Selected Files:</h4>
+          {files.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between bg-gray-800 p-3 rounded-lg"
+            >
+              <div className="flex items-center gap-3">
+                <FileCheck className="text-green-500" />
+                <span>{file.name}</span>
+                <span className="text-gray-400 text-sm">
+                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+              <button
+                onClick={() => removeFile(index)}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
