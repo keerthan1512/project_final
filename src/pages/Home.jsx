@@ -12,12 +12,16 @@ import {
   LineChart,
   ExternalLink
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import FeatureCard from '../components/FeatureCard.jsx';
 import StepCard from '../components/StepCard.jsx';
 import BenefitCard from '../components/BenefitCard.jsx';
 
+import { useAuth } from '../contexts/AuthContext';
+
 function Home() {
+  const { user } = useAuth();
+
   return (
     <div>
       {/* Hero Section */}
@@ -37,14 +41,14 @@ function Home() {
             <p className="text-xl md:text-2xl mb-8 text-gray-300">
               Leverage AI-powered insights to detect patterns, classify crimes, and generate comprehensive reports with precision.
             </p>
-            <div className="flex gap-4">
+            {/* <div className="flex gap-4">
               <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all">
                 Get Started <ArrowRight size={20} />
               </button>
               <button className="border border-white hover:bg-white/10 text-white px-8 py-3 rounded-lg font-semibold transition-all">
                 Request Demo
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -131,17 +135,19 @@ function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-blue-600">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-8">Try Our AI Crime Analysis System Today</h2>
-          <p className="text-xl mb-12 max-w-2xl mx-auto">
-            Join law enforcement agencies worldwide in revolutionizing crime prevention and analysis.
-          </p>
-          <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all flex items-center gap-2 mx-auto">
-            Sign Up for Free Trial <ExternalLink size={20} />
-          </button>
-        </div>
-      </section>
+      {!user && (
+        <section className="py-24 bg-blue-600">
+          <div className="container mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold mb-8">Try Our AI Crime Analysis System Today</h2>
+            <p className="text-xl mb-12 max-w-2xl mx-auto">
+              Join law enforcement agencies worldwide in revolutionizing crime prevention and analysis.
+            </p>
+            <Link to="/register" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-200 transition-all flex items-center gap-2 mx-auto text-lg">
+                          Sign Up for Free Trial <ExternalLink size={20} />
+                        </Link>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="bg-gray-900 py-12">

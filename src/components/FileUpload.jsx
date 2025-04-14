@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 
 function FileUpload({
-  title,
-  description,
+  title = "Upload Files",
+  description = "Drag and drop or click to select files",
   acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
   maxSize = 10
 }) {
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -66,25 +67,40 @@ function FileUpload({
 
   const handleUpload = async () => {
     const formData = new FormData();
-    files.forEach(file => {
-      formData.append('files', file);
-    });
+    files.forEach(file => formData.append('files', file));
 
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
 
-      if (response.ok) {
-        alert('Files uploaded successfully!');
-        setFiles([]);
-      } else {
-        const errorData = await response.json();
-        setError(`Upload failed: ${errorData.message || 'Unknown error'}`);
-      }
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          alert('Files uploaded successfully!');
+          setFiles([]);
+          setUploadProgress(0);
+        } else {
+          const errorData = JSON.parse(xhr.responseText);
+          setError(`Upload failed: ${errorData.message || 'Unknown error'}`);
+          setUploadProgress(0);
+        }
+      };
+
+      xhr.onerror = () => {
+        setError('Upload failed: Network error');
+        setUploadProgress(0);
+      };
+
+      xhr.send(formData);
     } catch (error) {
       setError(`Upload failed: ${error.message}`);
+      setUploadProgress(0);
     }
   };
 
@@ -116,11 +132,11 @@ function FileUpload({
           <h3 className="text-xl font-bold mb-2">{title}</h3>
           <p className="text-gray-400 mb-4">{description}</p>
           <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-                      onClick={() => document.getElementById('file-upload').click()}
-                    >
-                      Select Files
-                    </button>
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            onClick={() => document.getElementById('file-upload').click()}
+          >
+            Select Files
+          </button>
 
           {files.length > 0 && (
             <button
@@ -129,6 +145,16 @@ function FileUpload({
             >
               Upload Files
             </button>
+          )}
+
+          {uploadProgress > 0 && (
+            <div className="w-full bg-gray-700 rounded-full mt-4">
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+              <p className="text-sm text-gray-400 mt-1">{uploadProgress}%</p>
+            </div>
           )}
         </label>
       </div>
@@ -150,6 +176,13 @@ function FileUpload({
             >
               <div className="flex items-center gap-3">
                 <FileCheck className="text-green-500" />
+                {file.type.startsWith("image/") && (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                )}
                 <span>{file.name}</span>
                 <span className="text-gray-400 text-sm">
                   ({(file.size / 1024 / 1024).toFixed(2)} MB)

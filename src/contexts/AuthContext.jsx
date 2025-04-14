@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
   const signIn = async (email, password) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('https://project-final-a377.onrender.com/api/auth/login', {
         email,
         password,
       });
@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password, name) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      const response = await axios.post('https://project-final-a377.onrender.com/api/auth/register', {
         email,
         password,
         name,
@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
   const resetPassword = async (email) => {
     try {
       setLoading(true);
-      await axios.post('http://localhost:5000/api/auth/reset-password', { email });
+      await axios.post('https://project-final-a377.onrender.com/api/auth/reset-password', { email });
       toast.success('Password reset instructions sent to your email!');
       navigate('/login');
     } catch (error) {
