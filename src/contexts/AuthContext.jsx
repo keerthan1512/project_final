@@ -3,32 +3,17 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+const AuthContext = createContext(undefined);
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
-  signOut: () => void;
-  resetPassword: (email: string) => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email, password) => {
     try {
       setLoading(true);
       const response = await axios.post('http://localhost:5000/api/auth/login', {
@@ -50,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email, password, name) => {
     try {
       setLoading(true);
       const response = await axios.post('http://localhost:5000/api/auth/register', {
@@ -81,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success('Successfully signed out!');
   };
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = async (email) => {
     try {
       setLoading(true);
       await axios.post('http://localhost:5000/api/auth/reset-password', { email });

@@ -1,12 +1,12 @@
 import React from 'react';
 import { FileSearch, Filter, FileText, PieChart, Share2, Zap } from 'lucide-react';
-import FileUpload from '../components/FileUpload';
+import FileUpload from '../components/FileUpload.jsx';
 
 function FeatureExtraction() {
   return (
     <div>
       {/* Hero Section */}
-      <div 
+      <div
         className="relative min-h-[60vh] flex items-center"
         style={{
           backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40")',

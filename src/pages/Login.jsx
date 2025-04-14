@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { LogIn } from 'lucide-react';
 
 export default function Login() {
@@ -8,7 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const { signIn, loading } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await signIn(email, password);

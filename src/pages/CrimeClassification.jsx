@@ -1,12 +1,12 @@
 import React from 'react';
 import { BarChart3, PieChart, Target, Fingerprint, Shield, AlertTriangle } from 'lucide-react';
-import FileUpload from '../components/FileUpload';
+import FileUpload from '../components/FileUpload.jsx';
 
 function CrimeClassification() {
   return (
     <div>
       {/* Hero Section */}
-      <div 
+      <div
         className="relative min-h-[60vh] flex items-center"
         style={{
           backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("https://images.unsplash.com/photo-1569396116180-210c182bedb8")',

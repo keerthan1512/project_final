@@ -1,12 +1,12 @@
 import React from 'react';
 import { Brain, Network, Cpu, Database, BarChart as ChartBar, Lock } from 'lucide-react';
-import FileUpload from '../components/FileUpload';
+import FileUpload from '../components/FileUpload.jsx';
 
 function AIAnalysis() {
   return (
     <div>
       {/* Hero Section */}
-      <div 
+      <div
         className="relative min-h-[60vh] flex items-center"
         style={{
           backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("https://images.unsplash.com/photo-1488229297570-58520851e868")',
@@ -55,7 +55,7 @@ function AIAnalysis() {
                 Our advanced AI algorithms identify complex crime patterns and correlations that might be missed by traditional analysis methods.
               </p>
             </div>
-            
+
             <div className="bg-gray-800 p-8 rounded-xl">
               <Network className="w-12 h-12 text-blue-500 mb-6" />
               <h3 className="text-2xl font-bold mb-4">Neural Networks</h3>

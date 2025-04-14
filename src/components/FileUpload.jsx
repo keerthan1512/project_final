@@ -1,24 +1,17 @@
 import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 
-interface FileUploadProps {
-  title: string;
-  description: string;
-  acceptedTypes?: string;
-  maxSize?: number; // in MB
-}
-
-export default function FileUpload({ 
-  title, 
-  description, 
+function FileUpload({
+  title,
+  description,
   acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
-  maxSize = 10 
-}: FileUploadProps) {
+  maxSize = 10
+}) {
   const [dragActive, setDragActive] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
-  const [error, setError] = useState<string>("");
+  const [files, setFiles] = useState([]);
+  const [error, setError] = useState("");
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -28,15 +21,15 @@ export default function FileUpload({
     }
   };
 
-  const validateFile = (file: File): boolean => {
+  const validateFile = (file) => {
     if (file.size > maxSize * 1024 * 1024) {
       setError(`File size must be less than ${maxSize}MB`);
       return false;
     }
-    
+
     const fileType = file.name.split('.').pop()?.toLowerCase();
     const validTypes = acceptedTypes.split(',').map(type => type.replace('.', ''));
-    
+
     if (!fileType || !validTypes.includes(fileType)) {
       setError(`Invalid file type. Accepted types: ${acceptedTypes}`);
       return false;
@@ -45,7 +38,7 @@ export default function FileUpload({
     return true;
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -56,7 +49,7 @@ export default function FileUpload({
     setFiles(prev => [...prev, ...validFiles]);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     e.preventDefault();
     setError("");
 
@@ -67,7 +60,7 @@ export default function FileUpload({
     }
   };
 
-  const removeFile = (index: number) => {
+  const removeFile = (index) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -90,7 +83,7 @@ export default function FileUpload({
         const errorData = await response.json();
         setError(`Upload failed: ${errorData.message || 'Unknown error'}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       setError(`Upload failed: ${error.message}`);
     }
   };
@@ -122,9 +115,13 @@ export default function FileUpload({
           <Upload className="w-12 h-12 text-blue-500 mb-4" />
           <h3 className="text-xl font-bold mb-2">{title}</h3>
           <p className="text-gray-400 mb-4">{description}</p>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
-            Select Files
-          </button>
+          <button
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                      onClick={() => document.getElementById('file-upload').click()}
+                    >
+                      Select Files
+                    </button>
+
           {files.length > 0 && (
             <button
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4"
@@ -171,3 +168,5 @@ export default function FileUpload({
     </div>
   );
 }
+
+export default FileUpload;

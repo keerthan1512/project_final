@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { UserPlus } from 'lucide-react';
 
 export default function Register() {
@@ -9,7 +9,7 @@ export default function Register() {
   const [name, setName] = useState('');
   const { signUp, loading } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await signUp(email, password, name);
