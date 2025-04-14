@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 
-function FileUpload({
-  title = "Upload Files",
+function CrimeClassificationFileUpload({
+  title = "Upload Crime Reports",
   description = "Drag and drop or click to select files",
   acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
   maxSize = 10
@@ -11,6 +11,7 @@ function FileUpload({
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [results, setResults] = useState(null);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -67,26 +68,30 @@ function FileUpload({
 
   const handleUpload = async () => {
     const formData = new FormData();
-    files.forEach(file => formData.append('file', file));
+    files.forEach(file => formData.append('image', file));
 
     try {
-      const response = await fetch('/api/upload', {
+      const response = await fetch('http://127.0.0.1:5000/predict', {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
-        alert('Files uploaded successfully!');
+        const data = await response.json();
+        setResults(data);
+        setError("");
         setFiles([]);
         setUploadProgress(0);
       } else {
         const errorData = await response.json();
         setError(`Upload failed: ${errorData.message || 'Unknown error'}`);
         setUploadProgress(0);
+        setResults(null);
       }
     } catch (error) {
       setError(`Upload failed: ${error.message}`);
       setUploadProgress(0);
+      setResults(null);
     }
   };
 
@@ -150,8 +155,8 @@ function FileUpload({
           <AlertCircle className="text-red-500" />
           <p className="text-red-500">{error}</p>
         </div>
-
       )}
+
       {files.length > 0 && (
         <div className="mt-6 space-y-3">
           <h4 className="font-semibold">Selected Files:</h4>
@@ -184,8 +189,22 @@ function FileUpload({
           ))}
         </div>
       )}
+       {results && (
+          <div className="mt-6 p-4 bg-green-500/10 border border-green-500 rounded-lg">
+            <h4 className="font-semibold">Classification Results:</h4>
+             {typeof results === 'string' ? (
+              <p className="text-white">{results}</p>
+            ) : (
+              <div>
+              {Object.entries(results).map(([key, value]) => (
+                <p className="text-white" key={key}>{key}: {value}</p>
+              ))}
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }
 
-export default FileUpload;
+export default CrimeClassificationFileUpload;

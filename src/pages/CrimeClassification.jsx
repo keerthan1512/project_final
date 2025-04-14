@@ -1,5 +1,6 @@
 import React from 'react';
 import { BarChart3, PieChart, Target, Fingerprint, Shield, AlertTriangle } from 'lucide-react';
+import CrimeClassificationFileUpload from '../components/CrimeClassificationFileUpload.jsx';
 import FileUpload from '../components/FileUpload.jsx';
 
 function CrimeClassification() {
@@ -34,7 +35,7 @@ function CrimeClassification() {
             <p className="text-gray-400 text-center mb-12">
               Upload your crime reports and evidence for automatic classification and pattern analysis.
             </p>
-            <FileUpload
+           <CrimeClassificationFileUpload
               title="Upload Crime Reports"
               description="Drag and drop your files here, or click to select files"
               acceptedTypes=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.csv"

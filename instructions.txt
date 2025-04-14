@@ -1,0 +1,32 @@
+To enable CORS in your Flask API, you can use the Flask-CORS extension. Here's how:
+
+1. Install the Flask-CORS extension:
+   pip install Flask-CORS
+
+2. Import Flask-CORS and enable CORS for your app:
+
+   from flask import Flask
+   from flask_cors import CORS
+
+   app = Flask(__name__)
+   CORS(app)  # This will enable CORS for all routes
+
+   # Your API routes here
+
+3. If you want to enable CORS for specific routes, you can do so like this:
+
+   from flask import Flask
+   from flask_cors import CORS
+
+   app = Flask(__name__)
+
+   @app.route("/predict")
+   def predict():
+       # Your API logic here
+       return "Result"
+
+   CORS(app, resources={r"/predict": {"origins": "http://localhost:5173"}})
+
+   # This will enable CORS only for the /predict route and only allow requests from http://localhost:5173
+
+Please note that enabling CORS for all routes might not be the best security practice. It's recommended to enable CORS only for specific routes and origins that need to access your API.
