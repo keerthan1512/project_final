@@ -2,6 +2,8 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import crypto from  'crypto';
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
 router.get("/", (req, res) => {
@@ -12,7 +14,7 @@ router.get("/register", (req, res) => {
   res.send("register is working")
 })
 
-router.get("/login",(req,res)=>{
+router.get("/login", (req, res) => {
   res.send("login is working")
 })
 
@@ -117,18 +119,52 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // In a real application, you would:
-    // 1. Generate a reset token
-    // 2. Save it to the user document with an expiry
-    // 3. Send an email with a reset link
-    // For this demo, we'll just return a success message
-    res.json({ message: 'Password reset instructions sent to your email' });
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      secure: true,
+      host: "smtp.gmail.com",
+      port: 465,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+
+    const mailOptions = {
+      to: user.email,
+      from: process.env.EMAIL_USER,
+      subject: 'Password Reset',
+      html: `
+        <p>You requested a password reset.</p>
+        <p>Click the link below to reset it:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't request this, ignore this email.</p>
+      `,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Email send error:", error);
+        return res.status(500).json({ message: 'Error sending email' });
+      } else {
+        console.log('Email sent: ' + info.response);
+        res.json({ message: 'Password reset instructions sent to your email' });
+      }
+    });
   } catch (error) {
+    console.error("Reset Password API Error:", error);
     res.status(500).json({ message: 'Server error' });
   }
 });
