@@ -169,6 +169,36 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+router.post('/reset-password-confirm', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Find user by reset password token
+    const user = await User.findOne({
+      resetPasswordToken: crypto.createHash('sha256').update(token).digest('hex'),
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 import multer from 'multer';
 
 const storage = multer.diskStorage({
