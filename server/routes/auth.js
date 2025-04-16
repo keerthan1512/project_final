@@ -169,6 +169,10 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+router.get('/reset-password-confirm', async(req,res)=>{
+  res.send("Reset password is working");
+});
+
 router.post('/reset-password-confirm', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
