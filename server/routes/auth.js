@@ -139,7 +139,7 @@ router.post('/reset-password', async (req, res) => {
       }
     });
 
-    const resetLink = `https://scene-x.vercel.app/reset-password?token=${resetToken}`;
+    const resetLink = `https://scene-x.vercel.app/ResetPassword?token=${resetToken}`;
 
     const mailOptions = {
       to: user.email,
