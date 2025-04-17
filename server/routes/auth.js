@@ -180,7 +180,7 @@ router.post('/reset-password-confirm', async (req, res) => {
     // Find user by reset password token
     const user = await User.findOne({
       resetPasswordToken: crypto.createHash('sha256').update(token).digest('hex'),
-      resetPasswordExpires: { $gt: Date.now() },
+      resetPasswordExpires: { $gte: Date.now() },
     });
 
     if (!user) {
