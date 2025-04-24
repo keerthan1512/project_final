@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
+import { Client } from "@gradio/client";
 
 function CrimeClassificationFileUpload({
   title = "Upload Crime Reports",
@@ -59,6 +60,7 @@ function CrimeClassificationFileUpload({
       const selectedFiles = Array.from(e.target.files);
       const validFiles = selectedFiles.filter(validateFile);
       setFiles(prev => [...prev, ...validFiles]);
+      e.target.value = null; // Reset input
     }
   };
 
@@ -67,27 +69,28 @@ function CrimeClassificationFileUpload({
   };
 
   const handleUpload = async () => {
-    const formData = new FormData();
-    files.forEach(file => formData.append('image', file));
+    setUploadProgress(0);
+    setError("");
+    setResults(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/predict', {
-        method: 'POST',
-        body: formData,
-      });
+      const client = await Client.connect("JonSnow1512/clip-model");
+      const totalFiles = files.length;
+      const resultsArray = [];
 
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data);
-        setError("");
-        setFiles([]);
-        setUploadProgress(0);
-      } else {
-        const errorData = await response.json();
-        setError(`Upload failed: ${errorData.message || 'Unknown error'}`);
-        setUploadProgress(0);
-        setResults(null);
+      for (let i = 0; i < totalFiles; i++) {
+        const file = files[i];
+        const result = await client.predict("/predict", {
+          image: file,
+        });
+
+        resultsArray.push({ name: file.name, result: result.data });
+        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
       }
+
+      setResults(resultsArray);
+      setFiles([]);
+      setUploadProgress(0);
     } catch (error) {
       setError(`Upload failed: ${error.message}`);
       setUploadProgress(0);
@@ -115,14 +118,12 @@ function CrimeClassificationFileUpload({
           id="file-upload"
         />
 
-        <label
-          htmlFor="file-upload"
-          className="flex flex-col items-center cursor-pointer"
-        >
+        <div className="flex flex-col items-center">
           <Upload className="w-12 h-12 text-blue-500 mb-4" />
           <h3 className="text-xl font-bold mb-2">{title}</h3>
           <p className="text-gray-400 mb-4">{description}</p>
           <button
+            type="button"
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
             onClick={() => document.getElementById('file-upload').click()}
           >
@@ -131,6 +132,7 @@ function CrimeClassificationFileUpload({
 
           {files.length > 0 && (
             <button
+              type="button"
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4"
               onClick={handleUpload}
             >
@@ -147,7 +149,7 @@ function CrimeClassificationFileUpload({
               <p className="text-sm text-gray-400 mt-1">{uploadProgress}%</p>
             </div>
           )}
-        </label>
+        </div>
       </div>
 
       {error && (
@@ -158,26 +160,28 @@ function CrimeClassificationFileUpload({
       )}
 
       {files.length > 0 && (
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-3 max-h-60 overflow-auto">
           <h4 className="font-semibold">Selected Files:</h4>
           {files.map((file, index) => (
             <div
               key={index}
               className="flex items-center justify-between bg-gray-800 p-3 rounded-lg"
             >
-              <div className="flex items-center gap-3">
-                <FileCheck className="text-green-500" />
+              <div className="flex items-center gap-3 w-full">
+                <FileCheck className="text-green-500 shrink-0" />
                 {file.type.startsWith("image/") && (
                   <img
                     src={URL.createObjectURL(file)}
                     alt={file.name}
-                    className="w-12 h-12 object-cover rounded"
+                    className="w-12 h-12 object-cover rounded shrink-0"
                   />
                 )}
-                <span>{file.name}</span>
-                <span className="text-gray-400 text-sm">
-                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                </span>
+                <div className="truncate w-full">
+                  <span className="block truncate">{file.name}</span>
+                  <span className="text-gray-400 text-sm block">
+                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => removeFile(index)}
@@ -189,20 +193,17 @@ function CrimeClassificationFileUpload({
           ))}
         </div>
       )}
-       {results && (
-          <div className="mt-6 p-4 bg-green-500/10 border border-green-500 rounded-lg">
-            <h4 className="font-semibold">Classification Results:</h4>
-             {typeof results === 'string' ? (
-              <p className="text-white">{results}</p>
-            ) : (
-              <div>
-              {Object.entries(results).map(([key, value]) => (
-                <p className="text-white" key={key}>{key}: {value}</p>
-              ))}
-              </div>
-            )}
-          </div>
-        )}
+
+      {results && (
+        <div className="mt-6 p-4 bg-green-500/10 border border-green-500 rounded-lg">
+          <h4 className="font-semibold">Classification Results:</h4>
+          {results.map((r, index) => (
+            <div key={index} className="text-white">
+              <strong>{r.name}</strong>: {r.result}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -8,6 +8,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="myDiv" style="width:100px; height:100px; background-color:red;"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      anime({
+        targets: '#myDiv',
+        translateX: 250,
+        rotate: '1turn',
+        backgroundColor: '#FFF',
+        duration: 800
+      });
+    </script>
   </body>
 </html>
