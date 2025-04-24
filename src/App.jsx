@@ -1,4 +1,5 @@
 import React from 'react';
+import ResetPassword from './pages/ResetPassword';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Menu, X, LogOut } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
@@ -155,6 +156,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/ai-analysis"
             element={
