@@ -194,16 +194,25 @@ function CrimeClassificationFileUpload({
         </div>
       )}
 
-      {results && (
-        <div className="mt-6 p-4 bg-green-500/10 border border-green-500 rounded-lg">
-          <h4 className="font-semibold">Classification Results:</h4>
-          {results.map((r, index) => (
-            <div key={index} className="text-white">
-              <strong>{r.name}</strong>: {r.result}
-            </div>
-          ))}
+{results && (
+  <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
+    <h4 className="text-2xl font-bold text-green-400 mb-4">Classification Results:</h4>
+    <div className="space-y-4">
+      {results.map((r, index) => (
+        <div
+          key={index}
+          className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
+        >
+          <div className="flex items-center justify-between">
+            <strong className="text-lg">{r.name}</strong>
+            <span className="text-sm opacity-80">{r.result}</span>
+          </div>
         </div>
-      )}
+      ))}
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
