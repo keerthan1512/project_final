@@ -177,7 +177,7 @@ function Home() {
               <div className="flex space-x-4">
                 <a href="#" className="text-gray-400 hover:text-white">Twitter</a>
                 <a href="#" className="text-gray-400 hover:text-white">LinkedIn</a>
-                <a href="#" className="text-gray-400 hover:text-white">GitHub</a>
+                <a href="https://github.com/keerthan1512/project_final.git" className="text-gray-400 hover:text-white">GitHub</a>
               </div>
             </div>
           </div>
