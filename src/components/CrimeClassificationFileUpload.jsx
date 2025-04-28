@@ -205,7 +205,7 @@ function CrimeClassificationFileUpload({
         >
           <div className="flex items-center justify-between">
             <span className="text-base">{r.name}</span>
-            <span className="px-3 py-1 rounded-full bg-green-500 text-white font-semibold text-sm">
+            <span className="px-4 py-2 rounded-full bg-green-500 text-white font-bold text-lg">
               {r.result}
             </span>
           </div>
@@ -214,6 +214,7 @@ function CrimeClassificationFileUpload({
     </div>
   </div>
 )}
+
 
 
     </div>
