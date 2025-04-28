@@ -204,14 +204,17 @@ function CrimeClassificationFileUpload({
           className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
         >
           <div className="flex items-center justify-between">
-            <strong className="text-lg">{r.name}</strong>
-            <span className="text-sm opacity-80">{r.result}</span>
+            <span className="text-base">{r.name}</span>
+            <span className="px-3 py-1 rounded-full bg-green-500 text-white font-semibold text-sm">
+              {r.result}
+            </span>
           </div>
         </div>
       ))}
     </div>
   </div>
 )}
+
 
     </div>
   );
