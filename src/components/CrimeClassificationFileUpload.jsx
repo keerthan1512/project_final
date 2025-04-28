@@ -13,6 +13,7 @@ function CrimeClassificationFileUpload({
   const [error, setError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [results, setResults] = useState(null);
+  const [classifying, setClassifying] = useState(false);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -72,6 +73,7 @@ function CrimeClassificationFileUpload({
     setUploadProgress(0);
     setError("");
     setResults(null);
+    setClassifying(true);
 
     try {
       const client = await Client.connect("JonSnow1512/clip-model");
@@ -91,10 +93,12 @@ function CrimeClassificationFileUpload({
       setResults(resultsArray);
       setFiles([]);
       setUploadProgress(0);
+      setClassifying(false);
     } catch (error) {
       setError(`Upload failed: ${error.message}`);
       setUploadProgress(0);
       setResults(null);
+      setClassifying(false);
     }
   };
 
@@ -193,7 +197,11 @@ function CrimeClassificationFileUpload({
           ))}
         </div>
       )}
-
+      {classifying && (
+        <div className="mt-6 p-6 bg-yellow-500/10 border border-yellow-500 rounded-xl shadow-lg">
+          <h4 className="text-2xl font-bold text-yellow-400 mb-4">Classifying...</h4>
+        </div>
+      )}
 {results && (
   <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
     <h4 className="text-2xl font-bold text-green-400 mb-4">Classification Results:</h4>
