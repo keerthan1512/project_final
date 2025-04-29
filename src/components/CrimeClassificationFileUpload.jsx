@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 import { Client } from "@gradio/client";
 
+
 function CrimeClassificationFileUpload({
   title = "Upload Crime Reports",
   description = "Drag and drop or click to select files",

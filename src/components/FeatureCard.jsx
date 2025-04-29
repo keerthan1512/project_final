@@ -1,5 +1,6 @@
 import React from 'react';
 
+
 function FeatureCard({ icon, title, description }) {
   return (
     <div className="bg-gray-800 p-8 rounded-xl hover:transform hover:scale-105 transition-all">

@@ -1,5 +1,6 @@
 import React from 'react';
 
+
 function StepCard({ number, icon, title, description }) {
   return (
     <div className="relative bg-gray-900 p-8 rounded-xl">

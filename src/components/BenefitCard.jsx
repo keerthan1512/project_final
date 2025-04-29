@@ -1,5 +1,6 @@
 import React from 'react';
 
+
 function BenefitCard({ icon, title, description }) {
   return (
     <div className="bg-gray-800 p-8 rounded-xl text-center">
