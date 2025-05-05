@@ -3,7 +3,7 @@ import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 import { Client } from "@gradio/client";
 
 
-function AiAnalysisFileUpload({
+function CrimeClassificationFileUpload({
   title = "Upload Crime Reports",
   description = "Drag and drop or click to select files",
   acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
@@ -77,7 +77,7 @@ function AiAnalysisFileUpload({
     setClassifying(true);
 
     try {
-      const client = await Client.connect("JonSnow1512/clip-model");
+      const client = await Client.connect("cartman2k5/crime_scene_analyzer");
       const totalFiles = files.length;
       const resultsArray = [];
 
@@ -87,7 +87,7 @@ function AiAnalysisFileUpload({
           image: file,
         });
 
-        resultsArray.push({ name: file.name, result: result.data });
+        resultsArray.push({ name: file.name, detected_objects:result.objects,report:result.report });
         setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
       }
 
@@ -200,12 +200,12 @@ function AiAnalysisFileUpload({
       )}
       {classifying && (
         <div className="mt-6 p-6 bg-yellow-500/10 border border-yellow-500 rounded-xl shadow-lg">
-          <h4 className="text-2xl font-bold text-yellow-400 mb-4">Classifying...</h4>
+          <h4 className="text-2xl font-bold text-yellow-400 mb-4">Analyzing...</h4>
         </div>
       )}
 {results && (
   <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
-    <h4 className="text-2xl font-bold text-green-400 mb-4">Classification Results:</h4>
+    <h4 className="text-2xl font-bold text-green-400 mb-4">Analysis Results:</h4>
     <div className="space-y-4">
       {results.map((r, index) => (
         <div
@@ -213,9 +213,10 @@ function AiAnalysisFileUpload({
           className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
         >
           <div className="flex items-center justify-between">
-            <span className="text-base">{r.names}</span>
+            <span className="text-base">{r.name}</span>
             <span className="px-4 py-2 rounded-full bg-green-500 text-white font-bold text-lg">
-              {r.result}
+              {r.detectd_objects}
+              {r.report}
             </span>
           </div>
         </div>
@@ -231,4 +232,4 @@ function AiAnalysisFileUpload({
   );
 }
 
-export default AiAnalysisFileUpload;
+export default CrimeClassificationFileUpload;

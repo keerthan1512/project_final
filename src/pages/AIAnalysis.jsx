@@ -1,6 +1,6 @@
 import React from 'react';
 import { Brain, Network, Cpu, Database, BarChart as ChartBar, Lock } from 'lucide-react';
-import FileUpload from '../components/FileUpload.jsx';
+import AiAnalysisFileUpload from '../components/AiAnalysisFileUpload.jsx';
 
 function AIAnalysis() {
   return (
@@ -34,7 +34,7 @@ function AIAnalysis() {
             <p className="text-gray-400 text-center mb-12">
               Upload your crime data files for AI-powered analysis. Our system supports various file formats including images, documents, and structured data files.
             </p>
-            <FileUpload
+            <AiAnalysisFileUpload
               title="Upload Crime Data"
               description="Drag and drop your files here, or click to select files"
               acceptedTypes=".jpg,.jpeg,.png,.pdf,.doc,.docx,.csv,.xlsx"
