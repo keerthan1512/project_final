@@ -1,7 +1,6 @@
 import React from 'react';
 import { BarChart3, PieChart, Target, Fingerprint, Shield, AlertTriangle } from 'lucide-react';
 import CrimeClassificationFileUpload from '../components/CrimeClassificationFileUpload.jsx';
-import FileUpload from '../components/FileUpload.jsx';
 
 function CrimeClassification() {
   return (

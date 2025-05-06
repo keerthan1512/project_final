@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import crypto from  'crypto';
 import nodemailer from 'nodemailer';
+import CrimeHistory from '../models/CrimeHistory.js';
 
 const router = express.Router();
 router.get("/", (req, res) => {
@@ -216,14 +217,40 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post('/upload', upload.array('files'), (req, res) => {
+router.post('/upload', async (req, res) => {
   try {
-    console.log('Files uploaded:', req.files);
-    res.status(200).json({ message: 'Files uploaded successfully!' });
+    // Assuming user ID is available in the request (e.g., from JWT)
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let userId = null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+      } catch (err) {
+        console.error("JWT Verification Error:", err);
+        return res.status(401).json({ message: 'Unauthorized - Invalid token' });
+      }
+    } else {
+      return res.status(401).json({ message: 'Unauthorized - Missing token' });
+    }
+
+    const { filename, classificationResult } = req.body;
+
+    // Store the classification history in the database
+    const crimeHistory = new CrimeHistory({
+      userId: userId,
+      filename: filename,
+      classificationResult: classificationResult
+    });
+    await crimeHistory.save();
+
+    res.status(200).json({ message: 'Classification result stored successfully!' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
 
 export default router;

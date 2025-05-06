@@ -3,7 +3,7 @@ import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 import { Client } from "@gradio/client";
 
 
-function CrimeClassificationFileUpload({
+function AiAnalysisFileUpload({
   title = "Upload Crime Reports",
   description = "Drag and drop or click to select files",
   acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
@@ -232,4 +232,4 @@ function CrimeClassificationFileUpload({
   );
 }
 
-export default CrimeClassificationFileUpload;
+export default AiAnalysisFileUpload;

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 import { Client } from "@gradio/client";
 
-
-function AiAnalysisFileUpload({
+function CrimeClassificationFileUpload({
   title = "Upload Crime Reports",
   description = "Drag and drop or click to select files",
   acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
@@ -77,21 +76,48 @@ function AiAnalysisFileUpload({
     setClassifying(true);
 
     try {
+      const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
       const client = await Client.connect("JonSnow1512/clip-model");
       const totalFiles = files.length;
       const resultsArray = [];
 
       for (let i = 0; i < totalFiles; i++) {
         const file = files[i];
-        const result = await client.predict("/predict", {
-          image: file,
-        });
 
-        resultsArray.push({ name: file.name, result: result.data });
-        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+        try {
+          const result = await client.predict("/predict", {
+            image: file,
+          });
+          const classificationResult = Array.isArray(result.data) ? result.data[0] : result.data;
+
+          const response = await fetch('https://project-final-a377.onrender.com/api/auth/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              filename: file.name,
+              classificationResult: classificationResult
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          //const data = await response.json();
+          resultsArray.push({ name: file.name, result: classificationResult });
+          setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+        } catch (uploadError) {
+          setError(`Upload failed: ${uploadError.message}`);
+          setUploadProgress(0);
+          setResults(null);
+          setClassifying(false);
+        }
       }
 
-      setResults(resultsArray);
+      setResults(resultsArray); // Set results state here
       setFiles([]);
       setUploadProgress(0);
       setClassifying(false);
@@ -203,32 +229,28 @@ function AiAnalysisFileUpload({
           <h4 className="text-2xl font-bold text-yellow-400 mb-4">Classifying...</h4>
         </div>
       )}
-{results && (
-  <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
-    <h4 className="text-2xl font-bold text-green-400 mb-4">Classification Results:</h4>
-    <div className="space-y-4">
-      {results.map((r, index) => (
-        <div
-          key={index}
-          className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-base">{r.names}</span>
-            <span className="px-4 py-2 rounded-full bg-green-500 text-white font-bold text-lg">
-              {r.result}
-            </span>
+      {results && (
+        <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
+          <h4 className="text-2xl font-bold text-green-400 mb-4">Classification Results:</h4>
+          <div className="space-y-4">
+            {results.map((r, index) => (
+              <div
+                key={index}
+                className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base">{r.name}</span>
+                  <span className="px-4 py-2 rounded-full bg-green-500 text-white font-bold text-lg">
+                    {r.result}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-)}
-
-
-
-
+      )}
     </div>
   );
 }
 
-export default AiAnalysisFileUpload;
+export default CrimeClassificationFileUpload;
