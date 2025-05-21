@@ -1,7 +1,7 @@
 import React from 'react';
 import ResetPassword from './pages/ResetPassword';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, History as HistoryIcon } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import AIAnalysis from './pages/AIAnalysis';
 import FeatureExtraction from './pages/FeatureExtraction';
 import CrimeClassification from './pages/CrimeClassification';
+import History from './pages/History';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -48,6 +49,10 @@ function Navbar() {
                 </Link>
                 <Link to="/crime-classification" className="hover:text-blue-400 transition-colors">
                   Crime Classification
+                </Link>
+                <Link to="/history" className="hover:text-blue-400 transition-colors flex items-center gap-2">
+                  <HistoryIcon size={18} />
+                  History
                 </Link>
                 <button
                   onClick={signOut}
@@ -108,6 +113,14 @@ function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Crime Classification
+                  </Link>
+                  <Link
+                    to="/history"
+                    className="hover:text-blue-400 transition-colors flex items-center gap-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <HistoryIcon size={18} />
+                    History
                   </Link>
                   <button
                     onClick={() => {
@@ -178,6 +191,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <CrimeClassification />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <History />
               </ProtectedRoute>
             }
           />

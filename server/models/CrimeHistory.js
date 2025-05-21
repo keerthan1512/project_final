@@ -14,10 +14,28 @@ const crimeHistorySchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  featureType: {
+    type: String,
+    enum: ['classification', 'ai-analysis', 'feature-extraction'],
+    required: true
+  },
+  confidence: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  imageUrl: String,
+  details: mongoose.Schema.Types.Mixed,
   timestamp: {
     type: Date,
     default: Date.now
   }
+});
+
+// Add text indexes for search functionality
+crimeHistorySchema.index({
+  filename: 'text',
+  classificationResult: 'text'
 });
 
 export default mongoose.model('CrimeHistory', crimeHistorySchema);
