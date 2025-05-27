@@ -5,8 +5,6 @@ import User from '../models/User.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import CrimeHistory from '../models/CrimeHistory.js';
-import speakeasy from 'speakeasy';
-import qrcode from 'qrcode';
 
 const router = express.Router();
 
@@ -84,7 +82,7 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, token2fa } = req.body;
+    const { email, password } = req.body;
 
     // Check if user exists
     const user = await User.findOne({ email });
@@ -96,26 +94,6 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Verify 2FA if enabled
-    if (user.isTwoFactorEnabled) {
-      if (!token2fa) {
-        return res.status(400).json({ 
-          message: '2FA token required',
-          requires2FA: true 
-        });
-      }
-
-      const verified = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
-        encoding: 'base32',
-        token: token2fa
-      });
-
-      if (!verified) {
-        return res.status(400).json({ message: 'Invalid 2FA token' });
-      }
     }
 
     // Create token
@@ -131,114 +109,8 @@ router.post('/login', async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        isTwoFactorEnabled: user.isTwoFactorEnabled
       },
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Setup 2FA
-router.post('/2fa/setup', async (req, res) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Generate secret
-    const secret = speakeasy.generateSecret({
-      name: `SceneX:${user.email}`
-    });
-
-    // Generate QR code
-    const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
-
-    // Save secret to user
-    user.twoFactorSecret = secret.base32;
-    await user.save();
-
-    res.json({
-      secret: secret.base32,
-      qrCode: qrCodeUrl
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Verify and Enable 2FA
-router.post('/2fa/verify', async (req, res) => {
-  try {
-    const { token: verificationToken } = req.body;
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const verified = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: 'base32',
-      token: verificationToken
-    });
-
-    if (!verified) {
-      return res.status(400).json({ message: 'Invalid verification code' });
-    }
-
-    user.isTwoFactorEnabled = true;
-    await user.save();
-
-    res.json({ message: '2FA enabled successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Disable 2FA
-router.post('/2fa/disable', async (req, res) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.isTwoFactorEnabled = false;
-    user.twoFactorSecret = undefined;
-    await user.save();
-
-    res.json({ message: '2FA disabled successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
