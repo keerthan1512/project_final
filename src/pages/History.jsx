@@ -70,11 +70,17 @@ function History() {
         }
       });
 
-      if (!response.ok) throw new Error('Failed to fetch history');
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Your session has expired. Please log in again.');
+          return;
+        }
+        throw new Error('Failed to fetch history');
+      }
 
-      const data = await response.json();
-      
-      if (isNewSearch) {
+    const data = await response.json();
+    
+    if (isNewSearch) {
         setHistory(data.items);
       } else {
         setHistory(prev => [...prev, ...data.items]);

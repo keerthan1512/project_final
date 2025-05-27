@@ -98,7 +98,8 @@ function CrimeClassificationFileUpload({
             },
             body: JSON.stringify({
               filename: file.name,
-              classificationResult: classificationResult
+              classificationResult: classificationResult,
+              featureType:'classification'
             })
           });
 

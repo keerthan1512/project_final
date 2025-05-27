@@ -16,7 +16,6 @@ const crimeHistorySchema = new mongoose.Schema({
   },
   featureType: {
     type: String,
-    enum: ['classification', 'ai-analysis', 'feature-extraction'],
     required: true
   },
   confidence: {
