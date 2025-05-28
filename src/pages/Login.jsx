@@ -6,14 +6,22 @@ import { LogIn } from 'lucide-react';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [token2fa, setToken2fa] = useState('');
+  const [requires2FA, setRequires2FA] = useState(false);
   const { signIn, loading } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await signIn(email, password);
+      const response = await signIn(email, password, token2fa);
+      if (response?.requires2FA) {
+        setRequires2FA(true);
+      }
     } catch (error) {
       console.error('Login error:', error);
+      if(error.status==400){
+        setRequires2FA(true);
+      }
     }
   };
 
@@ -53,12 +61,29 @@ export default function Login() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            {requires2FA && (
+              <div>
+                <label htmlFor="2fa-token" className="sr-only">
+                  2FA Token
+                </label>
+                <input
+                  id="2fa-token"
+                  name="2fa-token"
+                  type="text"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="Enter 2FA code"
+                  value={token2fa}
+                  onChange={(e) => setToken2fa(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between">

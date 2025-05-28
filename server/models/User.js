@@ -24,6 +24,13 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date,
   },
+  twoFactorSecret: {
+    type: String,
+  },
+  isTwoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default mongoose.model('User', userSchema);

@@ -15,6 +15,7 @@ import AIAnalysis from './pages/AIAnalysis';
 import FeatureExtraction from './pages/FeatureExtraction';
 import CrimeClassification from './pages/CrimeClassification';
 import History from './pages/History';
+import TwoFactorSetup from './pages/TwoFactorSetup';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -53,6 +54,9 @@ function Navbar() {
                 <Link to="/history" className="hover:text-blue-400 transition-colors flex items-center gap-2">
                   <HistoryIcon size={18} />
                   History
+                </Link>
+                <Link to="/2fa-setup" className="hover:text-blue-400 transition-colors">
+                  2FA Setup
                 </Link>
                 <button
                   onClick={signOut}
@@ -122,6 +126,13 @@ function Navbar() {
                     <HistoryIcon size={18} />
                     History
                   </Link>
+                  <Link
+                    to="/2fa-setup"
+                    className="hover:text-blue-400 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    2FA Setup
+                  </Link>
                   <button
                     onClick={() => {
                       signOut();
@@ -170,6 +181,14 @@ function AppContent() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/2fa-setup"
+            element={
+              <ProtectedRoute>
+                <TwoFactorSetup />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/ai-analysis"
             element={

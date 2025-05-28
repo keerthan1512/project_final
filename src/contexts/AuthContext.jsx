@@ -13,13 +13,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const signIn = async (email, password) => {
+  const signIn = async (email, password, token2fa = null) => {
     try {
       setLoading(true);
       const response = await axios.post('https://project-final-a377.onrender.com/api/auth/login', {
         email,
         password,
+        token2fa,
       });
+
+      if (response.data.requires2FA) {
+        toast.info('Please enter your 2FA code');
+        return { requires2FA: true };
+      }
 
       const { token, user } = response.data;
       localStorage.setItem('token', token);
@@ -28,7 +34,7 @@ export function AuthProvider({ children }) {
       toast.success('Successfully signed in!');
       navigate('/');
     } catch (error) {
-      toast.error('Failed to sign in. Please check your credentials.');
+      toast.error(error.response?.data?.message || 'Failed to sign in');
       throw error;
     } finally {
       setLoading(false);
@@ -80,6 +86,72 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const setup2FA = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'https://project-final-a377.onrender.com/api/auth/2fa/setup',
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      toast.error('Failed to setup 2FA');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verify2FA = async (token) => {
+    try {
+      setLoading(true);
+      const authToken = localStorage.getItem('token');
+      await axios.post(
+        'https://project-final-a377.onrender.com/api/auth/2fa/verify',
+        { token },
+        {
+          headers: { Authorization: `Bearer ${authToken}` }
+        }
+      );
+      const updatedUser = { ...user, isTwoFactorEnabled: true };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      toast.success('2FA enabled successfully!');
+    } catch (error) {
+      toast.error('Failed to verify 2FA code');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disable2FA = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'https://project-final-a377.onrender.com/api/auth/2fa/disable',
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      const updatedUser = { ...user, isTwoFactorEnabled: false };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      toast.success('2FA disabled successfully!');
+    } catch (error) {
+      toast.error('Failed to disable 2FA');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -89,6 +161,9 @@ export function AuthProvider({ children }) {
         signUp,
         signOut,
         resetPassword,
+        setup2FA,
+        verify2FA,
+        disable2FA,
       }}
     >
       {children}
