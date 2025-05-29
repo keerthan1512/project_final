@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
-import { Client } from "@gradio/client";
+
 
 
 function AiAnalysisFileUpload({
@@ -71,38 +71,32 @@ function AiAnalysisFileUpload({
   };
 
   const handleUpload = async () => {
-    setUploadProgress(0);
-    setError("");
-    setResults(null);
-    setClassifying(true);
+  if (files.length === 0) {
+    setError("No files selected.");
+    return;
+  }
 
-    try {
-      const client = await Client.connect("cartman2k5/crime_scene_analyzer");
-      const totalFiles = files.length;
-      const resultsArray = [];
+  setError("");
+  setClassifying(true);
+  const formData = new FormData();
+  formData.append("image", files[0]);  // ✅ Use first file from state
 
-      for (let i = 0; i < totalFiles; i++) {
-        const file = files[i];
-        const result = await client.predict("/predict", {
-          image: file,
-        });
+  try {
+    const response = await fetch("http://localhost:5000/api/analyze", {
+      method: "POST",
+      body: formData,
+    });
 
-        resultsArray.push({ name: file.name, detected_objects:result.objects,report:result.report });
-        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
-      }
-
-      setResults(resultsArray);
-      setFiles([]);
-      setUploadProgress(0);
-      setClassifying(false);
-    } catch (error) {
-      setError(`Upload failed: ${error.message}`);
-      setUploadProgress(0);
-      setResults(null);
-      setClassifying(false);
-    }
-  };
-
+    const data = await response.json();
+    console.log("Response from backend:", data);
+    setResults(data);  // ✅ Display results
+  } catch (err) {
+    console.error("Error during fetch:", err);
+    setError("Failed to upload file. Check the backend connection.");
+  } finally {
+    setClassifying(false);
+  }
+};
   return (
     <div className="w-full">
       <div
@@ -207,24 +201,22 @@ function AiAnalysisFileUpload({
   <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
     <h4 className="text-2xl font-bold text-green-400 mb-4">Analysis Results:</h4>
     <div className="space-y-4">
-      {results.map((r, index) => (
-        <div
-          key={index}
-          className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-base">{r.name}</span>
-            <span className="px-4 py-2 rounded-full bg-green-500 text-white font-bold text-lg">
-              {r.detectd_objects}
-              {r.report}
-            </span>
-          </div>
+      <div className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md">
+        <div className="flex flex-col">
+          <ul>
+            {results.evidence?.map((obj, i) => (
+              <li key={i}>
+                {/* Customize this as you want */}
+                <strong>{obj.label}</strong> - Score: {(obj.score * 100).toFixed(2)}%
+              </li>
+            ))}
+          </ul>
+          <p>{results.report}</p>
         </div>
-      ))}
+      </div>
     </div>
   </div>
 )}
-
 
 
 

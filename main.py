@@ -14,6 +14,7 @@ import numpy as np
 from datetime import datetime
 from fpdf import FPDF
 import os
+from io import BytesIO
 
 
 # ======================
@@ -164,8 +165,7 @@ class CrimeSceneAnalyzer:
             detections = self._detect_objects(image)
             evidence = self._classify_evidence(image, detections)
             
-            # Generate visualization
-            visualization = self._visualize_results(image.copy(), evidence if evidence else detections)
+           
             
             # Generate report
             if evidence:
@@ -174,22 +174,12 @@ class CrimeSceneAnalyzer:
                 report = "No forensic evidence detected. Detected objects:\n" + \
                         "\n".join(f"- {d['label']} (confidence: {d['score']:.2f})" for d in detections)
             
-            # Create PDF
-            pdf_path = None
-            if evidence or detections:
-                pdf_path = self._save_pdf_report(
-                    evidence or [],
-                    report,
-                    visualization,
-                    "crime_reports"
-                )
+            
             
             return {
                 "evidence": evidence or [],
                 "report": report,
-                "visualization": visualization,
-                "pdf_path": pdf_path,
-                "timestamp": datetime.now().isoformat()
+         
             }
         
         except Exception as e:
@@ -198,8 +188,7 @@ class CrimeSceneAnalyzer:
                 "error": str(e),
                 "evidence": [],
                 "report": "Analysis failed",
-                "visualization": None,
-                "pdf_path": None
+                
             }
 # ======================
 # 3. HELPER METHODS

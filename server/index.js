@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import fs from 'fs';
+import analyzeRoute from './routes/analyze.js';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 app.get("/",(req,res)=>{
   res.send("Server is running.")
 });
@@ -28,7 +30,7 @@ const __dirname = dirname(__filename);
 
 // Routes
 app.use('/api/auth', authRoutes);
-
+app.use('/api/analyze', analyzeRoute);
 // Serve static files from the 'dist' directory
 app.use(express.static(path.join(__dirname, '../dist')));
 
