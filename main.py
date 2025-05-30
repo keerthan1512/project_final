@@ -14,6 +14,7 @@ import numpy as np
 from datetime import datetime
 from fpdf import FPDF
 import os
+import io
 
 
 # ======================
@@ -156,51 +157,46 @@ class CrimeSceneAnalyzer:
 # ======================
 # 2. CORE FUNCTIONALITY
 # ======================
-    def analyze_scene(self, image_path_or_url):
+    def analyze_scene(self, image_pil: Image.Image): # <-- MODIFIED: Accept a PIL Image object
         try:
-            image = self._load_image(image_path_or_url)
-            
-            # Detection and classification
+            # MODIFICATION: Image is now passed directly, so no need for _load_image
+            # image = self._load_image(image_path_or_url)
+            image = image_pil # Use the passed-in PIL image
+
+            # Detection and classification (This part remains the same)
             detections = self._detect_objects(image)
             evidence = self._classify_evidence(image, detections)
             
-            # Generate visualization
+            # Generate visualization (This part remains the same)
+            # Ensure _visualize_results returns a PIL Image object
             visualization = self._visualize_results(image.copy(), evidence if evidence else detections)
             
-            # Generate report
+            # Generate report text (This part remains the same)
             if evidence:
-                report = self._generate_report(evidence, image.size)
+                report_text = self._generate_report(evidence, image.size)
             else:
-                report = "No forensic evidence detected. Detected objects:\n" + \
-                        "\n".join(f"- {d['label']} (confidence: {d['score']:.2f})" for d in detections)
+                report_text = "No forensic evidence detected. Detected objects:\n" + \
+                            "\n".join(f"- {d['label']} (confidence: {d['score']:.2f})" for d in detections)
             
-            # Create PDF
-            pdf_path = None
+            # --- MODIFICATION: Create PDF in-memory ---
+            pdf_bytes = None
             if evidence or detections:
-                pdf_path = self._save_pdf_report(
-                    evidence or [],
-                    report,
-                    visualization,
-                    "crime_reports"
+                # Call your new in-memory PDF generation function
+                pdf_bytes = self._generate_pdf_report_in_memory( # <-- Call the new function
+                    evidence=evidence or [],
+                    report_text=report_text,
+                    visualization_img=visualization
+                    # No output_dir argument needed anymore
                 )
             
-            return {
-                "evidence": evidence or [],
-                "report": report,
-                "visualization": visualization,
-                "pdf_path": pdf_path,
-                "timestamp": datetime.now().isoformat()
-            }
-        
+            # --- MODIFICATION: Return PDF bytes directly ---
+            # The FastAPI endpoint will now expect the raw PDF bytes.
+            return pdf_bytes 
+    
         except Exception as e:
             print(f"Analysis failed: {str(e)}")
-            return {
-                "error": str(e),
-                "evidence": [],
-                "report": "Analysis failed",
-                "visualization": None,
-                "pdf_path": None
-            }
+            # Return None if analysis or PDF generation fails
+            return None
 # ======================
 # 3. HELPER METHODS
 # ======================
@@ -370,7 +366,7 @@ class CrimeSceneAnalyzer:
             for e in evidence
         )
         
-        prompt = f"""CRIME SCENE ANALYSIS REPORT\n\nEVIDENCE FOUND:\n{evidence_text}\n\nANALYSIS:"""
+        prompt = f"""act as a professional detective\n\nEVIDENCE FOUND:\n{evidence_text}\n\nProvide an analysis of what could have happened based on the evidence provided."""
         
         inputs = self.report_tokenizer(prompt, return_tensors="pt")
         with torch.no_grad():
@@ -382,6 +378,7 @@ class CrimeSceneAnalyzer:
             )
         
         return self.report_tokenizer.decode(outputs[0], skip_special_tokens=True)
+
 
     def _visualize_results(self, image, items):
         draw = ImageDraw.Draw(image)
@@ -426,52 +423,41 @@ class CrimeSceneAnalyzer:
         
         return image
     
-    def _save_pdf_report(self, evidence, report_text, visualization_img, output_dir="reports"):
+    def _generate_pdf_report_in_memory(self, evidence, report_text, visualization_img):
+        """
+        Generates a professional PDF report entirely in memory and returns it as bytes.
+        This version uses the modern fpdf2 library's direct byte output.
+        """
         try:
-            # Create output directory with proper permissions
-            os.makedirs(output_dir, exist_ok=True)
-            if not os.access(output_dir, os.W_OK):
-                raise PermissionError(f"Cannot write to directory: {output_dir}")
-            
-            # Initialize PDF with metadata
+            # Initialize PDF
             pdf = FPDF(format='A4', unit='mm')
             pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
             
             # ===== 1. PROFESSIONAL HEADER =====
-            # Add logo if exists
             logo_path = "SceneX_logo.png"
             if os.path.exists(logo_path):
-                pdf.image(logo_path, x=10, y=8, w=25, h=25)  # Fixed aspect ratio
-                
-            # Main header
+                pdf.image(logo_path, x=10, y=8, w=25, h=25)
+            
             pdf.set_font("Courier", 'B', 18)
-            pdf.set_text_color(0, 51, 102)  # Dark blue
+            pdf.set_text_color(0, 51, 102)
             pdf.cell(0, 20, "OFFICIAL CRIME SCENE REPORT", ln=1, align='C')
             
-            # Case metadata with better spacing
-            pdf.set_font("Courier", '', 10)
+            pdf.set_font("Courier", '', 12)
             pdf.set_text_color(0, 0, 0)
             pdf.cell(0, 6, f"Case Reference: CSR-{datetime.now().strftime('%Y%m%d-%H%M%S')}", ln=1)
             pdf.cell(0, 6, f"Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=1)
-            pdf.ln(12)  # Extra space after header
+            pdf.ln(15)
             
-            # ===== 2. ENHANCED VISUALIZATION SECTION =====
-            # Process image for optimal PDF display
-            img = visualization_img.convert('RGB')  # Ensure RGB mode
-            img = self._add_watermark(img)  # Optional watermark function
+            # ===== 2. VISUALIZATION SECTION (IN-MEMORY) =====
+            img = visualization_img.convert('RGB')
             
-            # Save temp image with timestamp
-            temp_img_path = os.path.join(output_dir, f"temp_vis_{datetime.now().strftime('%H%M%S')}.jpg")
-            img.save(temp_img_path, quality=95, dpi=(300, 300))
-            
-            # Add to PDF with border and caption
-            pdf.set_font("Courier", 'B', 12)
-            pdf.cell(0, 8, "SCENE VISUALIZATION ANALYSIS", ln=1)
-            pdf.set_draw_color(150, 150, 150)
-            pdf.rect(10, pdf.get_y(), 190, 120)  # Border rectangle
-            pdf.image(temp_img_path, x=12, y=pdf.get_y()+2, w=186)  # Image inside border
-            pdf.ln(124)  # Space after image
+            with io.BytesIO() as img_buffer:
+                img.save(img_buffer, format="JPEG", quality=95)
+                # .getvalue() is correct for getting bytes from the buffer
+                pdf.image(img_buffer.getvalue(), x=12, y=pdf.get_y()+2, w=186, type='JPEG')
+                
+            pdf.ln(125)
             
             # ===== 3. EVIDENCE CATALOG =====
             if evidence:
@@ -480,41 +466,46 @@ class CrimeSceneAnalyzer:
                 pdf.cell(0, 10, "EVIDENCE CATALOG", ln=1, fill=True)
                 pdf.ln(5)
                 
-                # Table header
-                pdf.set_font("Courier", 'B', 10)
+                pdf.set_font("Courier", 'B', 12)
                 col_widths = [70, 40, 40, 40]
                 headers = ["Item Description", "Evidence Type", "Confidence", "Priority"]
                 for i, header in enumerate(headers):
                     pdf.cell(col_widths[i], 8, header, border=1, fill=True)
                 pdf.ln()
                 
-                # Table content
-                pdf.set_font("Courier", '', 9)
+                pdf.set_font("Courier", '', 10)
+                row_fill = False
                 for item in evidence:
-                    pdf.cell(col_widths[0], 8, item['label'], border=1)
-                    pdf.cell(col_widths[1], 8, item['type'].upper(), border=1)
-                    pdf.cell(col_widths[2], 8, f"{item['score']:.0%}", border=1)
-                    pdf.cell(col_widths[3], 8, str(item['priority']), border=1, ln=1)
+                    pdf.set_fill_color(255, 255, 255) if row_fill else pdf.set_fill_color(240, 240, 240)
+                    pdf.cell(col_widths[0], 8, item['label'], border=1, fill=True)
+                    pdf.cell(col_widths[1], 8, item['type'].upper(), border=1, fill=True)
+                    pdf.cell(col_widths[2], 8, f"{item['score']:.0%}", border=1, fill=True)
+                    pdf.cell(col_widths[3], 8, str(item['priority']), border=1, ln=1, fill=True)
+                    row_fill = not row_fill
                 pdf.ln(10)
             else:
                 pdf.set_font("Courier", 'B', 12)
-                pdf.set_text_color(255, 0, 0)  # Red for emphasis
+                pdf.set_text_color(255, 0, 0)
                 pdf.cell(0, 10, "NO FORENSIC EVIDENCE DETECTED", ln=1, align='C')
-                pdf.set_text_color(0, 0, 0)  # Reset color
+                pdf.set_text_color(0, 0, 0)
                 pdf.ln(10)
             
             # ===== 4. ANALYSIS REPORT =====
             pdf.set_font("Courier", 'B', 14)
+            pdf.set_text_color(0, 51, 102)
             pdf.cell(0, 10, "DIGITAL FORENSIC ANALYSIS", ln=1)
             pdf.set_draw_color(200, 200, 200)
             pdf.line(10, pdf.get_y(), 200, pdf.get_y())
             pdf.ln(5)
             
-            # Format text with proper paragraphs
-            pdf.set_font("Courier", '', 10)
-            paragraphs = report_text.split('\n')
+            pdf.set_font("Courier", '', 12)
+            # We must encode the report text to 'latin-1' to handle any special characters
+            # that FPDF might not support in its default font. 'replace' will substitute any
+            # unsupported characters.
+            cleaned_report_text = report_text.encode('latin-1', 'replace').decode('latin-1')
+            paragraphs = cleaned_report_text.split('\n')
             for para in paragraphs:
-                if para.strip():  # Skip empty lines
+                if para.strip():
                     pdf.multi_cell(0, 6, para)
                     pdf.ln(3)
             
@@ -526,21 +517,14 @@ class CrimeSceneAnalyzer:
             pdf.cell(0, 5, f"Page {pdf.page_no()}", 0, 0, 'R')
             
             # ===== 6. FINALIZE DOCUMENT =====
-            filename = f"CSR_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            output_path = os.path.join(output_dir, filename)
-            pdf.output(output_path)
-            
-            # Cleanup
-            if os.path.exists(temp_img_path):
-                os.remove(temp_img_path)
-            
-            print(f"✓ Professional report generated: {output_path}")
-            return output_path
-            
+            print("✓ Professional report generated in-memory.")
+            # The modern fpdf2 .output() method directly returns bytes.
+            # This is the simplest and most robust way, avoiding all encoding errors.
+            return pdf.output()
+
         except Exception as e:
             print(f"‼️ Critical PDF generation error: {str(e)}")
-            if 'temp_img_path' in locals() and os.path.exists(temp_img_path):
-                os.remove(temp_img_path)
+            traceback.print_exc()
             return None
 
     def _add_watermark(self, img):
