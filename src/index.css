@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+  Keyframes for the magnifying glass scanning animation.
+  It moves in a "Z" pattern across the container and pulses slightly.
+*/
+@keyframes scan-image {
+  0% {
+    top: 20%;
+    left: 20%;
+    transform: scale(1);
+  }
+  25% {
+    top: 20%;
+    left: 80%;
+    transform: scale(1.1);
+  }
+  50% {
+    top: 80%;
+    left: 80%;
+    transform: scale(1);
+  }
+  75% {
+    top: 80%;
+    left: 20%;
+    transform: scale(1.1);
+  }
+  100% {
+    top: 20%;
+    left: 20%;
+    transform: scale(1);
+  }
+}
+
+/* A helper class to apply the animation to our magnifying glass icon.
+*/
+.scanner-animation {
+  position: absolute;
+  /* The animation runs for 5 seconds, eases in and out, and loops forever */
+  animation: scan-image 5s ease-in-out infinite;
+}
