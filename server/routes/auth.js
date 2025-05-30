@@ -102,7 +102,7 @@ router.post('/login', async (req, res) => {
     if (user.isTwoFactorEnabled) {
       // If 2FA is enabled but no token provided, return requires2FA flag
       if (!token2fa) {
-        return res.status(400).json({
+        return res.status(403).json({
           message: '2FA token required',
           requires2FA: true
         });

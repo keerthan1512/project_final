@@ -19,7 +19,7 @@ export default function Login() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      if(error.status==400){
+      if(error.status==403){
         setRequires2FA(true);
       }
     }
