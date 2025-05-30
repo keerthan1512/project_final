@@ -33,7 +33,19 @@
     transform: scale(1);
   }
 }
+@keyframes move-scan-line {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(60px); /* This moves the line down by 60px */
+  }
+}
 
+.scan-line {
+  /* The animation runs for 1.5s, alternates direction, and loops forever */
+  animation: move-scan-line 1.5s ease-in-out infinite alternate;
+}
 /* A helper class to apply the animation to our magnifying glass icon.
 */
 .scanner-animation {
