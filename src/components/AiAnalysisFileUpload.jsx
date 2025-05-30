@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
-
-
+import { Upload, X, FileCheck, AlertCircle, Cpu } from 'lucide-react'; // Added Cpu for analyzing state
 
 function AiAnalysisFileUpload({
-  title = "Upload Crime Reports",
-  description = "Drag and drop or click to select files",
-  acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
+  // Adjusted props for clarity
+  title = "AI Scene Analysis",
+  description = "Upload a single image for analysis",
+  acceptedTypes = ".jpg,.jpeg,.png", // Only accept image types
   maxSize = 10
 }) {
   const [dragActive, setDragActive] = useState(false);
-  const [files, setFiles] = useState([]);
+  const [file, setFile] = useState(null); // Changed to handle a single file for simplicity
   const [error, setError] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [results, setResults] = useState(null);
-  const [classifying, setClassifying] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // Renamed from 'classifying'
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -26,97 +23,117 @@ function AiAnalysisFileUpload({
     }
   };
 
-  const validateFile = (file) => {
-    if (file.size > maxSize * 1024 * 1024) {
+  const validateFile = (fileToValidate) => {
+    if (fileToValidate.size > maxSize * 1024 * 1024) {
       setError(`File size must be less than ${maxSize}MB`);
       return false;
     }
-
-    const fileType = file.name.split('.').pop()?.toLowerCase();
+    const fileType = fileToValidate.name.split('.').pop()?.toLowerCase();
     const validTypes = acceptedTypes.split(',').map(type => type.replace('.', ''));
-
     if (!fileType || !validTypes.includes(fileType)) {
       setError(`Invalid file type. Accepted types: ${acceptedTypes}`);
       return false;
     }
-
     return true;
   };
 
+  const handleFileSelect = (files) => {
+    setError("");
+    if (files && files[0]) {
+      const selectedFile = files[0];
+      if (validateFile(selectedFile)) {
+        setFile(selectedFile);
+      }
+    }
+  };
+  
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    setError("");
-
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    const validFiles = droppedFiles.filter(validateFile);
-    setFiles(prev => [...prev, ...validFiles]);
+    handleFileSelect(Array.from(e.dataTransfer.files));
   };
 
   const handleChange = (e) => {
     e.preventDefault();
-    setError("");
+    handleFileSelect(Array.from(e.target.files));
+    e.target.value = null; // Reset input to allow re-selecting the same file
+  };
 
-    if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
-      const validFiles = selectedFiles.filter(validateFile);
-      setFiles(prev => [...prev, ...validFiles]);
-      e.target.value = null; // Reset input
+  const removeFile = () => {
+    setFile(null);
+  };
+
+  // --- THIS IS THE MAIN MODIFIED FUNCTION ---
+  const handleGenerateReport = async () => {
+    if (!file) {
+      setError("Please select a file to analyze.");
+      return;
+    }
+
+    setError("");
+    setIsAnalyzing(true);
+    
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      // 1. Point to your Node.js proxy server
+      const response = await fetch("http://localhost:5000/api/generate-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        // Try to parse error from backend, otherwise throw generic error
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed to generate PDF. Server responded with status ${response.status}`);
+      }
+      
+      // 2. Get filename from the response header
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'crime_report.pdf'; // Default filename
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
+      // 3. Get the PDF as a blob and create a download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename; // Use the dynamic filename from the server
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error("Error during report generation:", err);
+      setError(err.message || "An unexpected error occurred. Please check the console.");
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
-  const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleUpload = async () => {
-  if (files.length === 0) {
-    setError("No files selected.");
-    return;
-  }
-
-  setError("");
-  setClassifying(true);
-  const formData = new FormData();
-  formData.append("image", files[0]);  // ✅ Use first file from state
-
-  try {
-    const response = await fetch("http://localhost:5000/api/analyze", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-    console.log("Response from backend:", data);
-    setResults(data);  // ✅ Display results
-  } catch (err) {
-    console.error("Error during fetch:", err);
-    setError("Failed to upload file. Check the backend connection.");
-  } finally {
-    setClassifying(false);
-  }
-};
   return (
     <div className="w-full">
       <div
         className={`relative border-2 border-dashed rounded-lg p-8 text-center ${
           dragActive ? 'border-blue-500 bg-blue-50/10' : 'border-gray-600'
         }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
+        onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
       >
         <input
           type="file"
-          multiple
           className="hidden"
           accept={acceptedTypes}
           onChange={handleChange}
           id="file-upload"
         />
-
         <div className="flex flex-col items-center">
           <Upload className="w-12 h-12 text-blue-500 mb-4" />
           <h3 className="text-xl font-bold mb-2">{title}</h3>
@@ -126,28 +143,8 @@ function AiAnalysisFileUpload({
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
             onClick={() => document.getElementById('file-upload').click()}
           >
-            Select Files
+            Select Image
           </button>
-
-          {files.length > 0 && (
-            <button
-              type="button"
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4"
-              onClick={handleUpload}
-            >
-              Upload Files
-            </button>
-          )}
-
-          {uploadProgress > 0 && (
-            <div className="w-full bg-gray-700 rounded-full mt-4">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-              <p className="text-sm text-gray-400 mt-1">{uploadProgress}%</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -158,68 +155,50 @@ function AiAnalysisFileUpload({
         </div>
       )}
 
-      {files.length > 0 && (
-        <div className="mt-6 space-y-3 max-h-60 overflow-auto">
-          <h4 className="font-semibold">Selected Files:</h4>
-          {files.map((file, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between bg-gray-800 p-3 rounded-lg"
-            >
-              <div className="flex items-center gap-3 w-full">
-                <FileCheck className="text-green-500 shrink-0" />
-                {file.type.startsWith("image/") && (
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
-                    className="w-12 h-12 object-cover rounded shrink-0"
-                  />
-                )}
-                <div className="truncate w-full">
-                  <span className="block truncate">{file.name}</span>
-                  <span className="text-gray-400 text-sm block">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
+      {file && !isAnalyzing && (
+        <div className="mt-6 space-y-4">
+          <h4 className="font-semibold">Selected File:</h4>
+          <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg">
+            <div className="flex items-center gap-3 w-full">
+              <FileCheck className="text-green-500 shrink-0" />
+              <img
+                src={URL.createObjectURL(file)}
+                alt={file.name}
+                className="w-12 h-12 object-cover rounded shrink-0"
+              />
+              <div className="truncate w-full">
+                <span className="block truncate">{file.name}</span>
+                <span className="text-gray-400 text-sm block">
+                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
               </div>
-              <button
-                onClick={() => removeFile(index)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <X size={20} />
-              </button>
             </div>
-          ))}
+            <button
+              onClick={removeFile}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <button
+            type="button"
+            className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors font-bold text-lg"
+            onClick={handleGenerateReport}
+          >
+            Generate PDF Report
+          </button>
         </div>
       )}
-      {classifying && (
-        <div className="mt-6 p-6 bg-yellow-500/10 border border-yellow-500 rounded-xl shadow-lg">
-          <h4 className="text-2xl font-bold text-yellow-400 mb-4">Analyzing...</h4>
+      
+      {isAnalyzing && (
+        <div className="mt-6 p-6 bg-yellow-500/10 border border-yellow-500 rounded-xl shadow-lg flex flex-col items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Cpu className="text-yellow-400 animate-spin" size={32}/>
+            <h4 className="text-2xl font-bold text-yellow-400">Analyzing Image...</h4>
+          </div>
+          <p className="text-yellow-600">Please wait while the AI generates the report. This may take a moment.</p>
         </div>
       )}
-{results && (
-  <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
-    <h4 className="text-2xl font-bold text-green-400 mb-4">Analysis Results:</h4>
-    <div className="space-y-4">
-      <div className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md">
-        <div className="flex flex-col">
-          <ul>
-            {results.evidence?.map((obj, i) => (
-              <li key={i}>
-                {/* Customize this as you want */}
-                <strong>{obj.label}</strong> - Score: {(obj.score * 100).toFixed(2)}%
-              </li>
-            ))}
-          </ul>
-          <p>{results.report}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-
-
     </div>
   );
 }
