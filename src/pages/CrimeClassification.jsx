@@ -34,7 +34,7 @@ function CrimeClassification() {
             <p className="text-gray-400 text-center mb-12">
               Upload your crime reports and evidence for automatic classification and pattern analysis.
             </p>
-           <CrimeClassificationFileUpload
+            <CrimeClassificationFileUpload
               title="Upload Crime Reports"
               description="Drag and drop your files here, or click to select files"
               acceptedTypes=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.csv"
@@ -181,19 +181,6 @@ function CrimeClassification() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 bg-blue-600">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-8">Enhance Your Crime Classification</h2>
-          <p className="text-xl mb-12 max-w-2xl mx-auto">
-            Join law enforcement agencies worldwide using our AI-powered classification system.
-          </p>
-          <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all">
-            Get Started Today
-          </button>
         </div>
       </section>
     </div>
