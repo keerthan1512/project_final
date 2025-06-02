@@ -1,14 +1,14 @@
 // src/components/CrimeClassificationFileUpload.jsx
 import React from 'react';
 import UploaderInstance from './UploaderInstance'; // Adjust path if necessary
-import toast from 'react-hot-toast'; // <<<< IMPORT TOAST
+import toast from 'react-hot-toast';
 
 function CrimeClassificationFileUpload() {
   const imageModelApiUrl = "JonSnow1512/clip-model";
-  const videoModelApiUrl = "https://shreyas27-video-class.hf.space";
+  // Updated to point to your local Flask video model server
+  const videoModelApiUrl = "http://localhost:5001/predict_video";
 
-  // Function to handle saving classification results to history
-  const handleSaveToHistory = async (historyItems) => { // historyItems is an array
+  const handleSaveToHistory = async (historyItems) => {
     const token = localStorage.getItem('token');
     if (!token) {
       toast.error("User not authenticated. Cannot save to history.");
@@ -20,24 +20,19 @@ function CrimeClassificationFileUpload() {
 
     for (const item of historyItems) {
       try {
-        // IMPORTANT: Replace 'https://project-final-a377.onrender.com/api/auth/history'
-        // with your ACTUAL BACKEND ENDPOINT for SAVING a history item.
-        // This likely needs to be a POST request.
         const response = await fetch(`https://project-final-a377.onrender.com/api/auth/upload`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(item) // Send one item at a time
+          body: JSON.stringify(item)
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
           throw new Error(errorData.message || `Failed to save ${item.filename} to history.`);
         }
-        // const savedItem = await response.json();
-        // console.log('Saved to history:', savedItem);
         successCount++;
       } catch (error) {
         console.error("Error saving item to history:", error);
@@ -59,7 +54,6 @@ function CrimeClassificationFileUpload() {
   return (
     <div className="w-full max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
       <header className="text-center mb-16">
-        {/* ... header content ... */}
          <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
           Crime Scene Evidence Analysis
         </h1>
@@ -83,7 +77,7 @@ function CrimeClassificationFileUpload() {
               validationStartsWith="image/"
               gradioSpaceUrl={imageModelApiUrl}
               gradioApiName="/predict"
-              onClassificationComplete={handleSaveToHistory} // <<<< PASS THE HANDLER
+              onClassificationComplete={handleSaveToHistory}
             />
           </div>
         </section>
@@ -97,12 +91,13 @@ function CrimeClassificationFileUpload() {
               instanceType="video"
               title="Upload Crime Scene Videos"
               description="Select or drag video files (MP4, AVI, etc.)"
-              maxSize={100}
+              maxSize={100} // Consider adjusting if your local model has different constraints or processing time
               acceptMimeTypes="video/*"
               validationStartsWith="video/"
-              gradioSpaceUrl={videoModelApiUrl}
-              gradioApiName="/predict"
-              onClassificationComplete={handleSaveToHistory} // <<<< PASS THE HANDLER
+              gradioSpaceUrl={videoModelApiUrl} // This now points to your local server
+              // gradioApiName is not strictly needed for the local fetch but kept for consistency if UploaderInstance uses it
+              gradioApiName="/predict_video" // Or an empty string if the full path is in gradioSpaceUrl
+              onClassificationComplete={handleSaveToHistory}
             />
           </div>
         </section>
