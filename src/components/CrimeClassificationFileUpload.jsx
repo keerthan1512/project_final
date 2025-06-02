@@ -1,255 +1,116 @@
-import React, { useState } from 'react';
-import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
-import { Client } from "@gradio/client";
+// src/components/CrimeClassificationFileUpload.jsx
+import React from 'react';
+import UploaderInstance from './UploaderInstance'; // Adjust path if necessary
+import toast from 'react-hot-toast'; // <<<< IMPORT TOAST
 
-function CrimeClassificationFileUpload({
-  title = "Upload Crime Reports",
-  description = "Drag and drop or click to select files",
-  acceptedTypes = ".jpg,.jpeg,.png,.pdf,.doc,.docx",
-  maxSize = 10
-}) {
-  const [dragActive, setDragActive] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [error, setError] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [results, setResults] = useState(null);
-  const [classifying, setClassifying] = useState(false);
+function CrimeClassificationFileUpload() {
+  const imageModelApiUrl = "JonSnow1512/clip-model";
+  const videoModelApiUrl = "https://shreyas27-video-class.hf.space";
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const validateFile = (file) => {
-    if (file.size > maxSize * 1024 * 1024) {
-      setError(`File size must be less than ${maxSize}MB`);
-      return false;
+  // Function to handle saving classification results to history
+  const handleSaveToHistory = async (historyItems) => { // historyItems is an array
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error("User not authenticated. Cannot save to history.");
+      return;
     }
 
-    const fileType = file.name.split('.').pop()?.toLowerCase();
-    const validTypes = acceptedTypes.split(',').map(type => type.replace('.', ''));
+    let successCount = 0;
+    let errorCount = 0;
 
-    if (!fileType || !validTypes.includes(fileType)) {
-      setError(`Invalid file type. Accepted types: ${acceptedTypes}`);
-      return false;
-    }
+    for (const item of historyItems) {
+      try {
+        // IMPORTANT: Replace 'https://project-final-a377.onrender.com/api/auth/history'
+        // with your ACTUAL BACKEND ENDPOINT for SAVING a history item.
+        // This likely needs to be a POST request.
+        const response = await fetch(`https://project-final-a377.onrender.com/api/auth/upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(item) // Send one item at a time
+        });
 
-    return true;
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    setError("");
-
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    const validFiles = droppedFiles.filter(validateFile);
-    setFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const handleChange = (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
-      const validFiles = selectedFiles.filter(validateFile);
-      setFiles(prev => [...prev, ...validFiles]);
-      e.target.value = null; // Reset input
-    }
-  };
-
-  const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleUpload = async () => {
-    setUploadProgress(0);
-    setError("");
-    setResults(null);
-    setClassifying(true);
-
-    try {
-      const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
-      const client = await Client.connect("JonSnow1512/clip-model");
-      const totalFiles = files.length;
-      const resultsArray = [];
-
-      for (let i = 0; i < totalFiles; i++) {
-        const file = files[i];
-
-        try {
-          const result = await client.predict("/predict", {
-            image: file,
-          });
-          const classificationResult = Array.isArray(result.data) ? result.data[0] : result.data;
-
-          const response = await fetch('https://project-final-a377.onrender.com/api/auth/upload', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              filename: file.name,
-              classificationResult: classificationResult,
-              featureType:'classification'
-            })
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          //const data = await response.json();
-          resultsArray.push({ name: file.name, result: classificationResult });
-          setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
-        } catch (uploadError) {
-          setError(`Upload failed: ${uploadError.message}`);
-          setUploadProgress(0);
-          setResults(null);
-          setClassifying(false);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
+          throw new Error(errorData.message || `Failed to save ${item.filename} to history.`);
         }
+        // const savedItem = await response.json();
+        // console.log('Saved to history:', savedItem);
+        successCount++;
+      } catch (error) {
+        console.error("Error saving item to history:", error);
+        toast.error(`Could not save ${item.filename}: ${error.message}`);
+        errorCount++;
       }
+    }
 
-      setResults(resultsArray); // Set results state here
-      setFiles([]);
-      setUploadProgress(0);
-      setClassifying(false);
-    } catch (error) {
-      setError(`Upload failed: ${error.message}`);
-      setUploadProgress(0);
-      setResults(null);
-      setClassifying(false);
+    if (successCount > 0) {
+        toast.success(`${successCount} item(s) saved to history successfully!`);
+    }
+    if (errorCount > 0 && successCount === 0) {
+        toast.error(`Failed to save ${errorCount} item(s) to history.`);
+    } else if (errorCount > 0) {
+        toast.warn(`${errorCount} item(s) could not be saved to history. Check console for details.`);
     }
   };
 
   return (
-    <div className="w-full">
-      <div
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center ${
-          dragActive ? 'border-blue-500 bg-blue-50/10' : 'border-gray-600'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          multiple
-          className="hidden"
-          accept={acceptedTypes}
-          onChange={handleChange}
-          id="file-upload"
-        />
+    <div className="w-full max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+      <header className="text-center mb-16">
+        {/* ... header content ... */}
+         <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+          Crime Scene Evidence Analysis
+        </h1>
+        <p className="text-gray-400 mt-4 text-lg">
+          Upload image and video evidence for automated classification.
+        </p>
+      </header>
 
-        <div className="flex flex-col items-center">
-          <Upload className="w-12 h-12 text-blue-500 mb-4" />
-          <h3 className="text-xl font-bold mb-2">{title}</h3>
-          <p className="text-gray-400 mb-4">{description}</p>
-          <button
-            type="button"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-            onClick={() => document.getElementById('file-upload').click()}
-          >
-            Select Files
-          </button>
+      <div className="flex flex-col lg:flex-row gap-16">
+        <section className="bg-gray-800 p-8 rounded-2xl shadow-2xl lg:w-1/2 flex flex-col mb-12 lg:mb-0">
+          <h2 className="text-2xl lg:text-3xl font-semibold mb-8 text-blue-300 border-b-2 border-blue-400 pb-3">
+            Image Analysis
+          </h2>
+          <div className="flex-grow flex flex-col">
+            <UploaderInstance
+              instanceType="image"
+              title="Upload Crime Scene Images"
+              description="Select or drag image files (PNG, JPG, etc.)"
+              maxSize={20}
+              acceptMimeTypes="image/*"
+              validationStartsWith="image/"
+              gradioSpaceUrl={imageModelApiUrl}
+              gradioApiName="/predict"
+              onClassificationComplete={handleSaveToHistory} // <<<< PASS THE HANDLER
+            />
+          </div>
+        </section>
 
-          {files.length > 0 && (
-            <button
-              type="button"
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4"
-              onClick={handleUpload}
-            >
-              Upload Files
-            </button>
-          )}
-
-          {uploadProgress > 0 && (
-            <div className="w-full bg-gray-700 rounded-full mt-4">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-              <p className="text-sm text-gray-400 mt-1">{uploadProgress}%</p>
-            </div>
-          )}
-        </div>
+        <section className="bg-gray-800 p-8 rounded-2xl shadow-2xl lg:w-1/2 flex flex-col mb-12 lg:mb-0">
+          <h2 className="text-2xl lg:text-3xl font-semibold mb-8 text-green-300 border-b-2 border-green-400 pb-3">
+            Video Analysis
+          </h2>
+          <div className="flex-grow flex flex-col">
+            <UploaderInstance
+              instanceType="video"
+              title="Upload Crime Scene Videos"
+              description="Select or drag video files (MP4, AVI, etc.)"
+              maxSize={100}
+              acceptMimeTypes="video/*"
+              validationStartsWith="video/"
+              gradioSpaceUrl={videoModelApiUrl}
+              gradioApiName="/predict"
+              onClassificationComplete={handleSaveToHistory} // <<<< PASS THE HANDLER
+            />
+          </div>
+        </section>
       </div>
 
-      {error && (
-        <div className="mt-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-center gap-2">
-          <AlertCircle className="text-red-500" />
-          <p className="text-red-500">{error}</p>
-        </div>
-      )}
-
-      {files.length > 0 && (
-        <div className="mt-6 space-y-3 max-h-60 overflow-auto">
-          <h4 className="font-semibold">Selected Files:</h4>
-          {files.map((file, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between bg-gray-800 p-3 rounded-lg"
-            >
-              <div className="flex items-center gap-3 w-full">
-                <FileCheck className="text-green-500 shrink-0" />
-                {file.type.startsWith("image/") && (
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
-                    className="w-12 h-12 object-cover rounded shrink-0"
-                  />
-                )}
-                <div className="truncate w-full">
-                  <span className="block truncate">{file.name}</span>
-                  <span className="text-gray-400 text-sm block">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => removeFile(index)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      {classifying && (
-        <div className="mt-6 p-6 bg-yellow-500/10 border border-yellow-500 rounded-xl shadow-lg">
-          <h4 className="text-2xl font-bold text-yellow-400 mb-4">Classifying...</h4>
-        </div>
-      )}
-      {results && (
-        <div className="mt-6 p-6 bg-green-500/10 border border-green-500 rounded-xl shadow-lg">
-          <h4 className="text-2xl font-bold text-green-400 mb-4">Classification Results:</h4>
-          <div className="space-y-4">
-            {results.map((r, index) => (
-              <div
-                key={index}
-                className="p-4 bg-green-400/20 rounded-lg hover:bg-green-400/30 transition-colors text-white shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base">{r.name}</span>
-                  <span className="px-4 py-2 rounded-full bg-green-500 text-white font-bold text-lg">
-                    {r.result}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <footer className="text-center mt-20 text-gray-500">
+        <p>&copy; {new Date().getFullYear()} Crime Analysis Unit. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

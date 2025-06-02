@@ -17,7 +17,7 @@ export default function Login() {
       if (response?.requires2FA) {
         setRequires2FA(true);
       }
-    } catch (error) {
+    } catch (error) {1
       console.error('Login error:', error);
       if(error.status==403){
         setRequires2FA(true);
