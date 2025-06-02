@@ -1,5 +1,6 @@
 import torch
 import requests
+import google.generativeai as genai
 from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 from transformers import (
@@ -36,9 +37,18 @@ class CrimeSceneAnalyzer:
         self.vit_model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')
         
         # Report Generation (GPT-2 fine-tuned)
-        self.report_tokenizer = AutoTokenizer.from_pretrained("gpt2")
-        self.report_model = AutoModelForCausalLM.from_pretrained("gpt2")
-        
+        # self.report_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+        # self.report_model = AutoModelForCausalLM.from_pretrained("gpt2")
+        gemini_api_key = "AIzaSyAgtSMlji0S_2wRqhm9YERB2EDpAnOEvNM"
+        if not gemini_api_key:
+            print("⚠️ GEMINI_API_KEY environment variable not set. Report/Summary generation will be affected.")
+            self.gemini_model = None
+        else:
+            genai.configure(api_key=gemini_api_key)
+            # Choose the model best suited for report generation. 
+            # gemini-1.5-flash is fast and cost-effective.
+            # gemini-1.0-pro or gemini-1.5-pro for potentially more detailed/nuanced reports.
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash') 
         # Evidence Mapping
         self.EVIDENCE_MAP = {
             # Weapons
@@ -360,24 +370,67 @@ class CrimeSceneAnalyzer:
         debug_img.show()
         return debug_img
 
-    def _generate_report(self, evidence, image_size):
+    def _generate_report(self, evidence, image_size): # Renamed for clarity if you keep separate summary
+        if not self.gemini_model:
+            return "Report generation skipped: Gemini API key not configured."
+        if not evidence:
+            return "No evidence provided to generate a report."
+
         evidence_text = "\n".join(
-            f"- {e['type'].upper()}: {e['label']} (Confidence: {e['score']:.0%})"
+            f"- Object: {e.get('label', 'Unknown')}\n  Type: {e.get('type', 'N/A').upper()}\n  Confidence: {e.get('score', 0):.0%}\n  Assessed Priority: {e.get('priority', 'N/A')}"
             for e in evidence
         )
         
-        prompt = f"""act as a professional detective\n\nEVIDENCE FOUND:\n{evidence_text}\n\nProvide an analysis of what could have happened based on the evidence provided."""
+        # You can add image_size or other context to the prompt if needed
+        # image_context = f"The analysis was performed on an image of size: {image_size[0]}x{image_size[1]} pixels."
+
+        prompt = f"""
+        You are a professional detective providing a detailed forensic analysis report.
+        Based *only* on the evidence items listed below, generate a plausible narrative of what could have happened at the scene.
+        Structure your report clearly. Be objective and stick to the facts presented by the evidence.
+        Do not invent evidence not listed.
+
+        EVIDENCE FOUND:
+        {evidence_text}
+
+        ANALYSIS OF WHAT COULD HAVE HAPPENED:
+        """
         
-        inputs = self.report_tokenizer(prompt, return_tensors="pt")
-        with torch.no_grad():
-            outputs = self.report_model.generate(
-                **inputs,
-                max_length=500,
-                temperature=0.7,
-                do_sample=True
-            )
-        
-        return self.report_tokenizer.decode(outputs[0], skip_special_tokens=True)
+        try:
+            print("Generating detailed report with Gemini...")
+            response = self.gemini_model.generate_content(prompt)
+            
+            report_text = ""
+            if response.parts:
+                report_text = "".join(part.text for part in response.parts if hasattr(part, 'text'))
+            elif response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                report_text = "".join(part.text for part in response.candidates[0].content.parts if hasattr(part, 'text'))
+            
+            if not report_text.strip():
+                 return "Gemini generated an empty report for the provided evidence."
+            
+            # The prompt is already part of the generated text by Gemini,
+            # so we usually don't need to prepend it. 
+            # If Gemini's response *only* contains the analysis part, and not the "EVIDENCE FOUND" preamble,
+            # then you might want to structure the final return differently.
+            # For now, let's assume Gemini's response is the full text you need.
+            return report_text
+
+        except Exception as e:
+            print(f"‼️ Error calling Gemini API for report generation: {str(e)}")
+            return f"Detailed report generation failed due to an API error: {str(e)}"
+
+    # Your other methods like analyze_scene, _generate_pdf_report_in_memory, 
+    # _call_external_ai_model (if you implemented it), etc. will remain.
+    # Ensure analyze_scene calls this updated _generate_report method.
+    # Example:
+    # async def analyze_scene(self, image_pil: Image.Image):
+    #     # ... (code to get evidence from external AI API or local processing) ...
+    #     if evidence:
+    #         report_text_main = self._generate_report(evidence, image_pil.size) 
+    #     else:
+    #         report_text_main = "No significant evidence detected."
+    #
 
 
     def _visualize_results(self, image, items):
