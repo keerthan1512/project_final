@@ -163,10 +163,10 @@ function UploaderInstance({
             throw new Error(errorData.message || `Classification failed for ${fileObject.name}`);
           }
           const predictionData = await response.json();
-          classificationOutcome = `${predictionData.prediction} (Confidence: ${(predictionData.confidence * 100).toFixed(2)}%)`;
+          classificationOutcome = predictionData.prediction
           historyItemsArray.push({
             filename: fileObject.name, featureType: instanceType,
-            classificationResult: JSON.stringify(predictionData), timestamp: new Date().toISOString(),
+            classificationResult: JSON.stringify(predictionData.prediction), timestamp: new Date().toISOString(),
           });
         } else {
           let payload = instanceType === "video" ? [{ video: handle_file(fileObject), subtitles: null }] : [handle_file(fileObject)];
