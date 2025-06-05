@@ -45,9 +45,9 @@ function Navbar() {
                 <Link to="/ai-analysis" className="hover:text-blue-400 transition-colors">
                   AI Analysis
                 </Link>
-                <Link to="/feature-extraction" className="hover:text-blue-400 transition-colors">
+                {/* <Link to="/feature-extraction" className="hover:text-blue-400 transition-colors">
                   Feature Extraction
-                </Link>
+                </Link> */}
                 <Link to="/crime-classification" className="hover:text-blue-400 transition-colors">
                   Crime Classification
                 </Link>
@@ -104,13 +104,13 @@ function Navbar() {
                   >
                     AI Analysis
                   </Link>
-                  <Link
+                  {/* <Link
                     to="/feature-extraction"
                     className="hover:text-blue-400 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Feature Extraction
-                  </Link>
+                  </Link> */}
                   <Link
                     to="/crime-classification"
                     className="hover:text-blue-400 transition-colors"

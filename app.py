@@ -38,9 +38,9 @@ device = None
 
 try:
     logger.info(f"Loading image processor for {MODEL_NAME}...")
-    image_processor = AutoImageProcessor.from_pretrained(MODEL_NAME, trust_remote_code=True)
+    image_processor = AutoImageProcessor.from_pretrained(MODEL_NAME,token = "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" ,trust_remote_code=True)
     logger.info(f"Loading model {MODEL_NAME}...")
-    model = AutoModelForVideoClassification.from_pretrained(MODEL_NAME, trust_remote_code=True)
+    model = AutoModelForVideoClassification.from_pretrained(MODEL_NAME,token = "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" ,trust_remote_code=True)
     logger.info("Model and processor loaded successfully.")
 
     # If you have a GPU, move the model to GPU

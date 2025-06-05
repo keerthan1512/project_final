@@ -35,7 +35,7 @@ const __dirname = dirname(__filename);
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/analyze', analyzeRoute);
+// app.use('/api/analyze', analyzeRoute);
 app.use('/api/generate-pdf', (req, res, next) => {
   proxy('http://localhost:8000', {
     // This option prevents the proxy from parsing the request body,
