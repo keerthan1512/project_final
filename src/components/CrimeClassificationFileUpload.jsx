@@ -20,7 +20,7 @@ function CrimeClassificationFileUpload() {
 
     for (const item of historyItems) {
       try {
-        const response = await fetch(`http://localhost:5000/api/auth/upload`, {
+        const response = await fetch(`https://project-final-a377.onrender.com/api/auth/upload`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

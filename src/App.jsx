@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import AIAnalysis from './pages/AIAnalysis';
+import FeatureExtraction from './pages/FeatureExtraction';
 import CrimeClassification from './pages/CrimeClassification';
 import History from './pages/History';
 import TwoFactorSetup from './pages/TwoFactorSetup';
@@ -44,6 +45,9 @@ function Navbar() {
                 <Link to="/ai-analysis" className="hover:text-blue-400 transition-colors">
                   AI Analysis
                 </Link>
+                {/* <Link to="/feature-extraction" className="hover:text-blue-400 transition-colors">
+                  Feature Extraction
+                </Link> */}
                 <Link to="/crime-classification" className="hover:text-blue-400 transition-colors">
                   Crime Classification
                 </Link>
@@ -100,6 +104,13 @@ function Navbar() {
                   >
                     AI Analysis
                   </Link>
+                  {/* <Link
+                    to="/feature-extraction"
+                    className="hover:text-blue-400 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Feature Extraction
+                  </Link> */}
                   <Link
                     to="/crime-classification"
                     className="hover:text-blue-400 transition-colors"
@@ -183,6 +194,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <AIAnalysis />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/feature-extraction"
+            element={
+              <ProtectedRoute>
+                <FeatureExtraction />
               </ProtectedRoute>
             }
           />

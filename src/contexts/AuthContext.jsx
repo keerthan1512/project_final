@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
   const signIn = async (email, password, token2fa = null) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('https://project-final-a377.onrender.com/api/auth/login', {
         email,
         password,
         token2fa,
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password, name) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      const response = await axios.post('https://project-final-a377.onrender.com/api/auth/register', {
         email,
         password,
         name,
@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
   const resetPassword = async (email) => {
     try {
       setLoading(true);
-      await axios.post('http://localhost:5000/api/auth/reset-password', { email });
+      await axios.post('https://project-final-a377.onrender.com/api/auth/reset-password', { email });
       toast.success('Password reset instructions sent to your email!');
       navigate('/login');
     } catch (error) {
@@ -91,7 +91,7 @@ export function AuthProvider({ children }) {
       setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/auth/2fa/setup',
+        'https://project-final-a377.onrender.com/api/auth/2fa/setup',
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
       setLoading(true);
       const authToken = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:5000/api/auth/2fa/verify',
+        'https://project-final-a377.onrender.com/api/auth/2fa/verify',
         { token },
         {
           headers: { Authorization: `Bearer ${authToken}` }
@@ -134,7 +134,7 @@ export function AuthProvider({ children }) {
       setLoading(true);
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:5000/api/auth/2fa/disable',
+        'https://project-final-a377.onrender.com/api/auth/2fa/disable',
         {},
         {
           headers: { Authorization: `Bearer ${token}` }

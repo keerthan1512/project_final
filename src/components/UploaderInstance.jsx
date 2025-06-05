@@ -17,21 +17,21 @@ function UploaderInstance({
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [processingFileIndex, setProcessingFileIndex] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0); // Progress for the CURRENT file being processed
+  const [processingFileIndex, setProcessingFileIndex] = useState(0); // Index of the file being processed
   const [results, setResults] = useState(null);
   const [classifying, setClassifying] = useState(false);
   const fileInputRef = useRef(null);
-  const progressIntervalRef = useRef(null);
+  const progressIntervalRef = useRef(null); // Ref to store interval ID
 
   useEffect(() => {
     return () => {
       files.forEach(({ url }) => URL.revokeObjectURL(url));
       if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
+        clearInterval(progressIntervalRef.current); // Clear interval on component unmount
       }
     };
-  }, [files]);
+  }, [files]); // Added progressIntervalRef to cleanup
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -63,9 +63,9 @@ function UploaderInstance({
         validFiles.push({ file, url: URL.createObjectURL(file) });
       }
     });
-    setFiles((prev) => [...prev, ...validFiles.slice(0, 10 - prev.length)]);
-    setResults(null);
-    setUploadProgress(0);
+    setFiles((prev) => [...prev, ...validFiles.slice(0, 10 - prev.length)]); // Limit total files for sanity, e.g., 10
+    setResults(null); // Clear previous results when new files are selected
+    setUploadProgress(0); // Reset progress
   };
 
   const handleDrop = (e) => {
@@ -89,7 +89,7 @@ function UploaderInstance({
       URL.revokeObjectURL(prev[index].url);
       return prev.filter((_, i) => i !== index);
     });
-    if (files.length -1 === 0) {
+    if (files.length -1 === 0) { // If all files removed
         setResults(null);
         setError("");
         setUploadProgress(0);
@@ -102,7 +102,7 @@ function UploaderInstance({
     setError("");
     setResults(null);
     setClassifying(true);
-    setProcessingFileIndex(0);
+    setProcessingFileIndex(0); // Initialize for the first file
 
     const totalFiles = files.length;
     const resultsArray = [];
@@ -128,19 +128,21 @@ function UploaderInstance({
       const fileObject = currentFile.file;
       let classificationOutcome = "Unknown result format";
 
-      setUploadProgress(0); 
+      // --- Simulated Progress for the current file ---
+      setUploadProgress(0); // Reset progress for the current file
+
       const startSimulatedProgress = () => {
-        setUploadProgress(5); 
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        setUploadProgress(5); // Start at a small percentage to show activity
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current); // Clear any existing interval
         progressIntervalRef.current = setInterval(() => {
           setUploadProgress(prev => {
-            if (prev >= 95) { 
+            if (prev >= 95) { // Cap simulated progress before 100%
               if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
               return prev;
             }
-            return prev + (totalFiles > 1 ? 3 : 1); 
+            return prev + (totalFiles > 1 ? 3 : 1); // Slower increment for single file, faster for multiple
           });
-        }, totalFiles > 1 ? 150: 250); 
+        }, totalFiles > 1 ? 150: 250); // Faster interval for multiple files, slower for single (adjust as needed)
       };
 
       const stopSimulatedProgress = (finalProgress = 100) => {
@@ -150,7 +152,8 @@ function UploaderInstance({
         }
         setUploadProgress(finalProgress);
       };
-      
+      // --- End Simulated Progress Setup ---
+
       startSimulatedProgress();
 
       try {
@@ -178,10 +181,10 @@ function UploaderInstance({
             timestamp: new Date().toISOString(),
           });
         }
-        stopSimulatedProgress(100); 
+        stopSimulatedProgress(100); // Success
         resultsArray.push({ name: fileObject.name, result: classificationOutcome });
       } catch (uploadError) {
-        stopSimulatedProgress(0); 
+        stopSimulatedProgress(0); // Error, reset progress for this file or show error state
         console.error(`${instanceType} classification error for ${fileObject.name}:`, uploadError);
         const errorMessage = `Error: ${uploadError.message || "Classification failed"}`;
         resultsArray.push({ name: fileObject.name, result: errorMessage });
@@ -190,11 +193,13 @@ function UploaderInstance({
             classificationResult: errorMessage, timestamp: new Date().toISOString(), error: true
         });
         overallErrorOccurred = true;
-        if (totalFiles === 1) { 
+        if (totalFiles === 1) { // If single file fails, break and show error immediately
           break;
         }
       }
-    } 
+       // If there are more files, the loop will continue and reset progress for the next file.
+       // For the last file, uploadProgress will be 100 (or 0 on error).
+    } // End of for loop
 
     setResults(resultsArray);
     if (onClassificationComplete && historyItemsArray.length > 0) {
@@ -204,10 +209,12 @@ function UploaderInstance({
     files.forEach(({ url }) => URL.revokeObjectURL(url));
     setFiles([]);
     setClassifying(false);
-    
-    if (overallErrorOccurred && resultsArray.length > 0) { 
+    // Keep uploadProgress at its last state (100% or 0% from the last file) until new files are selected or an error clears it.
+    // Or explicitly set: setUploadProgress(overallErrorOccurred || resultsArray.length === 0 ? 0 : 100);
+
+    if (overallErrorOccurred && resultsArray.length > 0) { // If some succeeded and some failed
       setError(`Some ${instanceType}s could not be classified. Check results.`);
-    } else if (overallErrorOccurred) { 
+    } else if (overallErrorOccurred) { // If all failed (or single file failed)
        setError(`Classification failed for the ${instanceType}. Please try again.`);
     } else if (resultsArray.length > 0) {
       setError("");
@@ -216,7 +223,7 @@ function UploaderInstance({
 
   const getButtonText = () => {
     if (classifying) {
-      const totalFilesForButton = files.length || 1; 
+      const totalFilesForButton = files.length || 1; // Use files.length before it's cleared
       if (totalFilesForButton > 1) {
         return `Classifying file ${processingFileIndex + 1} of ${totalFilesForButton}... (${uploadProgress}%)`;
       }
@@ -233,8 +240,7 @@ function UploaderInstance({
     <div className="w-full">
       <div
         className={`relative border-2 border-dashed rounded-lg p-8 text-center ${
-          // Keeping drag active border yellow as it matches the upload icon
-          dragActive ? "border-yellow-500 bg-yellow-50/10" : "border-gray-600" 
+          dragActive ? "border-blue-500 bg-blue-50/10" : "border-gray-600"
         }`}
         onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
       >
@@ -246,12 +252,12 @@ function UploaderInstance({
           disabled={classifying}
         />
         <div className="flex flex-col items-center">
-          <Upload className="w-12 h-12 text-blue-500 mb-4" /> 
+          <Upload className="w-12 h-12 text-blue-500 mb-4" />
           <h3 className="text-xl font-bold mb-2">{title}</h3>
           <p className="text-gray-400 mb-4">{description}</p>
           <button
             type="button"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors" 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
             onClick={() => fileInputRef.current?.click()}
             aria-label={`Open file picker for ${instanceType}s`}
             disabled={classifying}
@@ -261,7 +267,7 @@ function UploaderInstance({
           {files.length > 0 && (
             <button
               type="button"
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4" 
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors mt-4"
               onClick={handleUploadAndClassify}
               aria-label={`Upload and classify selected ${instanceType}s`}
               disabled={classifying || files.length === 0}
@@ -270,15 +276,14 @@ function UploaderInstance({
             </button>
           )}
           {classifying && (
-             // --- Progress Bar Styling Changes (Option 4: Teal on Dark Gray) ---
-             <div className="w-full bg-gray-700 rounded-full mt-4 h-5"> {/* Outer bar: Dark Gray, height h-5 */}
+             <div className="w-full bg-gray-700 rounded-full mt-4">
               <div
-                className="bg-teal-500 h-5 rounded-full transition-all duration-150 ease-linear" // Inner bar: Teal, height h-5
+                className="bg-blue-500 h-2 rounded-full transition-all duration-150 ease-linear" // Adjusted transition
                 style={{ width: `${uploadProgress}%` }}
               />
+              <p className="text-sm text-gray-400 mt-1">{uploadProgress}%</p>
             </div>
           )}
-           {classifying && <p className="text-sm text-gray-400 mt-1">{uploadProgress}%</p>} 
         </div>
       </div>
 

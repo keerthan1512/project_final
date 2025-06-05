@@ -64,7 +64,7 @@ function History() {
       }
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/auth/history?page=${isNewSearch ? 1 : page}&search=${searchQuery}&featureType=${selectedFeatureType}&sortBy=${sortBy}&sortOrder=${sortOrder}${startDate ? `&startDate=${startDate.toISOString()}` : ''}${endDate ? `&endDate=${endDate.toISOString()}` : ''}`, {
+      const response = await fetch(`https://project-final-a377.onrender.com/api/auth/history?page=${isNewSearch ? 1 : page}&search=${searchQuery}&featureType=${selectedFeatureType}&sortBy=${sortBy}&sortOrder=${sortOrder}${startDate ? `&startDate=${startDate.toISOString()}` : ''}${endDate ? `&endDate=${endDate.toISOString()}` : ''}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -111,7 +111,7 @@ function History() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/history/clear', {
+      const response = await fetch('https://project-final-a377.onrender.com/api/auth/history/clear', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -131,7 +131,7 @@ function History() {
   const handleDownload = async (format) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/auth/history/download?format=${format}`, {
+      const response = await fetch(`https://project-final-a377.onrender.com/api/auth/history/download?format=${format}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -156,11 +156,12 @@ function History() {
   // Chart data
   const chartData = {
     bar: {
-      labels: ['AI Analysis', 'Classification'],
+      labels: ['AI Analysis', 'Feature Extraction', 'Classification'],
       datasets: [{
         label: 'Number of Analyses',
         data: [
           history.filter(item => item.featureType === 'ai-analysis').length,
+          history.filter(item => item.featureType === 'feature-extraction').length,
           history.filter(item => item.featureType === 'classification').length
         ],
         backgroundColor: ['rgba(54, 162, 235, 0.5)', 'rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)'],
@@ -169,10 +170,11 @@ function History() {
       }]
     },
     pie: {
-      labels: ['AI Analysis', 'Classification'],
+      labels: ['AI Analysis', 'Feature Extraction', 'Classification'],
       datasets: [{
         data: [
           history.filter(item => item.featureType === 'ai-analysis').length,
+          history.filter(item => item.featureType === 'feature-extraction').length,
           history.filter(item => item.featureType === 'classification').length
         ],
         backgroundColor: ['rgba(54, 162, 235, 0.5)', 'rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)'],
@@ -268,6 +270,7 @@ function History() {
               <option value="all">All Types</option>
               <option value="classification">Classification</option>
               <option value="ai-analysis">AI Analysis</option>
+              <option value="feature-extraction">Feature Extraction</option>
             </select>
           </div>
 
