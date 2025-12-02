@@ -1,0 +1,90 @@
+WEEK 1
+
+MAVEN PROJECT BUILDING
+Open gitbash ->mkdir selab ->cd selab(A folder will be created at Cdrive/users/name)
+Open eclipse File->import->Git->Projects from git smart import->at clone url, paste the url->click next
+->browse the selab folder->click next and finish
+In project explorer cloned prj will be visible
+Correct the pom.xml code in prj
+->right click on prj->run as maven clean(BUILD SUCCESS SHOULD DISPLAY)->run as maven install
+->run as maven test->run as maven build, in goals give clean install test->next(BUILD SUCCESS)
+In prj folder/target/.war will be generated
+Right click on prj folder->run as->run on server
+select apache->select tomcat v9->browse the location where tomcat was installed
+Server will start running 
+Go to edge give localhost:8080 then a web page like "WELCOME" will be visible
+
+PUSH THIS PRJ TO GITHUB
+Create a repo
+Delete .git file in prj folder
+Open gitbash->git init->git add .->git commit -m "msg"
+git branch -M main
+git remote add origin https://github.com/SindhuSri19/HelloWorld.git
+git push -u origin main
+Give all the commands in gitbash present under created repo in GitHub
+
+
+DOCKER IMAGE BUILDING
+Open powershell
+->cd selab->cd foldername that has pom.xml->mvn clean package
+A war file will be generated->Create a folder in selab name it as docker
+keep the generated war file and existed dockerfile in the docker folder
+Open dockerfile in notepad u will see target/*.war remove that and give the generated war file name and
+under tomcat give EXPOSE 8080
+Go to powershell->docker build -t csimage:latest .(use dot when actual command dont work)->docker images (here csimage should be visible)
+->docker run -d --name library_app -p 7007:8080 csimage:latest
+Open chrome->type hub.docker.com and sign in
+open repositories section present at leftside in docker hub
+Go to powershell again->docker login->docker tag csimage:latest username/csimage:2.0
+->docker push username/csimage:2.0->docker pull username/csimage:2.0 (output be like image created UpToDate...)
+Open chrome->type localhost:7007 (Entire web page should be visible)
+
+(Can use any number instead of 2.0)
+
+
+docker pull redis , docker run --name my-redis -d redis , docker ps , docker exec -it my-redis redis-cli , SET name "Alice" , GET name , docker stop my-redis , docker start my-redis , docker rm my-redis , docker rmi redis 
+
+=> Windows: Create a folder like C:\DockerProjects\Redis. Open Git Bash and navigate to the folder: cd /c/DockerProjects/Redis
+=> Mac/Linux: Create a folder: mkdir ~/DockerProjects/Redis , cd ~/DockerProjects/Redis
+=> nano dockerfile = FROM redis:latest    CMD ["redis-server"]
+=> docker build -t redisnew . , docker run --name myredisnew -d redisnew , docker ps , docker stop myredisnew , docker login , docker ps -a , docker commit 856ae4657fa9 snehal1729/redis1 , docker images , docker push snehal1729/redis1 ,  docker rm 856ae4657fa9 , docker rmi budarajumadhurika/redis1 , docker ps -a , docker logout ,  docker pull snehal1729/redis1 , docker run --name myredis -d snehal1729/redis1 , docker exec -it myredis redis-cli , SET name "Abcdef" , GET name , exit , docker ps -a , docker stop myredis , docker rm 50a6e4a9c326 , docker images ,  docker rmi snehal1729/redis1 , docker logout
+
+
+
+DOCKER COMPOSE:
+
+create folder on desktop = docker-compose, in powershell cd pathoddocker-composefolder
+nano docker-compose.yaml or create in folder and write code
+docker compose up -d, docker-compose down, repeat
+services:
+  web:
+    image: nginx
+    ports:
+      - "8060:80"
+  db:
+    image: tomee
+    ports:
+      - "8050:8080"
+version: '3.8'  # Docker Compose file format version
+
+services:
+  wordpress:  # WordPress service
+    image: wordpress:latest
+    ports:
+      - "8081:80"  # Map port 80 of the container to port 8080 of the host
+    environment:
+      WORDPRESS_DB_HOST: db:3306  # Database host
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    depends_on:
+      - db  # Ensures the db service starts first
+
+  db:  # MySQL service
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+go to localhost:8081
