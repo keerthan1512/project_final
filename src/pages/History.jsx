@@ -64,7 +64,7 @@ function History() {
       }
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/auth/history?page=${isNewSearch ? 1 : page}&search=${searchQuery}&featureType=${selectedFeatureType}&sortBy=${sortBy}&sortOrder=${sortOrder}${startDate ? `&startDate=${startDate.toISOString()}` : ''}${endDate ? `&endDate=${endDate.toISOString()}` : ''}`, {
+      const response = await fetch(`https://project-final-u2ba.onrender.com/api/auth/history?page=${isNewSearch ? 1 : page}&search=${searchQuery}&featureType=${selectedFeatureType}&sortBy=${sortBy}&sortOrder=${sortOrder}${startDate ? `&startDate=${startDate.toISOString()}` : ''}${endDate ? `&endDate=${endDate.toISOString()}` : ''}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -111,7 +111,7 @@ function History() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/history/clear', {
+      const response = await fetch('https://project-final-u2ba.onrender.com/api/auth/history/clear', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -131,7 +131,7 @@ function History() {
   const handleDownload = async (format) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/auth/history/download?format=${format}`, {
+      const response = await fetch(`https://project-final-u2ba.onrender.com/api/auth/history/download?format=${format}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

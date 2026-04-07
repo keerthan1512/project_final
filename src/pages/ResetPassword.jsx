@@ -28,7 +28,7 @@ export default function ResetPassword() {
 
     try {
       setLoading(true);
-      const response = await fetch('https://project-final-a377.onrender.com/api/auth/reset-password-confirm', {
+      const response = await fetch('https://project-final-u2ba.onrender.com/api/auth/reset-password-confirm', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
