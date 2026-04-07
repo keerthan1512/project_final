@@ -11,7 +11,10 @@ import authRoutes from './routes/auth.js';
 import fs from 'fs';
 import analyzeRoute from './routes/analyze.js';
 
-dotenv.config();
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
+// Load .env relative to the project root (one level above server folder)
+dotenv.config({ path: path.join(currentDir, '../.env') });
 // const upload = multer({ dest: 'uploads/' });
 const app = express();
 
@@ -24,14 +27,28 @@ app.get("/",(req,res)=>{
   res.send("Server is running.")
 });
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/scene';
+if (!process.env.MONGODB_URI) {
+  console.warn('WARNING: MONGODB_URI is not defined in environment; using fallback:', mongoURI);
+}
 
+if (!mongoURI.startsWith('mongodb://') && !mongoURI.startsWith('mongodb+srv://')) {
+  console.error('Invalid MongoDB URI scheme:', mongoURI);
+  process.exit(1);
+}
 
-import { dirname } from 'path';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
+})
+  .then(() => console.log('Connected to MongoDB:', mongoURI))
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -49,11 +66,11 @@ app.use('/api/generate-pdf', (req, res, next) => {
 });
 
 // Serve static files from the 'dist' directory
-app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(path.join(currentDir, '../dist')));
 
 // Handle any requests that don't match the API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  res.sendFile(path.join(currentDir, '../dist/index.html'));
 });
 
 const PORT = process.env.PORT || 5000;

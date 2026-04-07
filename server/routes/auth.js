@@ -28,7 +28,12 @@ router.post('/register', async (req, res) => {
   try {
     console.log('Register route - before destructuring req.body');
     const { email, password, name } = req.body;
-    console.log('Register route - after destructuring req.body');
+    console.log('Register route - after destructuring req.body', { email, name });
+
+    if (!email || !password || !name) {
+      console.warn('Register route - missing required fields', { email, name, password: !!password });
+      return res.status(400).json({ message: 'Email, password, and name are required.' });
+    }
 
     // Check if user exists
     console.log('Register route - before User.findOne');
@@ -59,6 +64,11 @@ router.post('/register', async (req, res) => {
 
     // Create token
     console.log('Register route - before jwt.sign');
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT secret is not configured (process.env.JWT_SECRET is empty)');
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET not set' });
+    }
+
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
@@ -118,6 +128,16 @@ router.post('/login', async (req, res) => {
       if (!verified) {
         return res.status(400).json({ message: 'Invalid 2FA token' });
       }
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT secret is not configured (process.env.JWT_SECRET is empty)');
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET not set' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT secret is not configured (process.env.JWT_SECRET is empty)');
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET not set' });
     }
 
     // Create token
@@ -388,12 +408,24 @@ router.post('/upload', async (req, res) => {
 // New History Routes
 router.get('/history', async (req, res) => {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT secret is not configured (process.env.JWT_SECRET is empty)');
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET not set' });
+    }
+
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error('JWT verification failed on /history:', err);
+      return res.status(401).json({ message: 'Unauthorized - Invalid token' });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
@@ -443,12 +475,24 @@ router.get('/history', async (req, res) => {
 
 router.delete('/history/clear', async (req, res) => {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT secret is not configured (process.env.JWT_SECRET is empty)');
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET not set' });
+    }
+
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error('JWT verification failed on /history/clear:', err);
+      return res.status(401).json({ message: 'Unauthorized - Invalid token' });
+    }
+
     await CrimeHistory.deleteMany({ userId: decoded.userId });
 
     res.json({ message: 'History cleared successfully' });
@@ -460,12 +504,24 @@ router.delete('/history/clear', async (req, res) => {
 
 router.get('/history/download', async (req, res) => {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT secret is not configured (process.env.JWT_SECRET is empty)');
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET not set' });
+    }
+
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error('JWT verification failed on /history/download:', err);
+      return res.status(401).json({ message: 'Unauthorized - Invalid token' });
+    }
+
     const history = await CrimeHistory.find({ userId: decoded.userId });
 
     const format = req.query.format || 'json';

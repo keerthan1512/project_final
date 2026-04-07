@@ -1,0 +1,8 @@
+google-genai
+ultralytics
+transformers
+torch
+pillow
+fpdf
+opencv-python
+numpy

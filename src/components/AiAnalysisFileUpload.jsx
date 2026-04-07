@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'; // <-- Import useEffect
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react'; 
 import magnifyingGlassIcon from '../assets/realistic-magnifying-glass.svg';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 function AiAnalysisFileUpload({
   title = "AI Scene Analysis",
   description = "Upload a single image for analysis",
@@ -54,7 +56,7 @@ function AiAnalysisFileUpload({
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await fetch("http://localhost:5000/api/generate-pdf", { method: "POST", body: formData });
+      const response = await fetch(`${API_BASE_URL}/api/generate-pdf`, { method: "POST", body: formData });
       if (!response.ok) { const errData = await response.json().catch(() => ({})); throw new Error(errData.error || `Server responded with status ${response.status}`); }
       const contentDisposition = response.headers.get('content-disposition');
       let filename = 'crime_report.pdf';

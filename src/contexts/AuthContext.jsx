@@ -13,10 +13,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  const apiClient = axios.create({ baseURL: API_BASE_URL });
+
   const signIn = async (email, password, token2fa = null) => {
     try {
       setLoading(true);
-      const response = await axios.post('https://project-final-a377.onrender.com/api/auth/login', {
+      const response = await apiClient.post('/api/auth/login', {
         email,
         password,
         token2fa,
@@ -44,7 +47,7 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password, name) => {
     try {
       setLoading(true);
-      const response = await axios.post('https://project-final-a377.onrender.com/api/auth/register', {
+      const response = await apiClient.post('/api/auth/register', {
         email,
         password,
         name,
@@ -57,7 +60,8 @@ export function AuthProvider({ children }) {
       toast.success('Successfully signed up!');
       navigate('/');
     } catch (error) {
-      toast.error('Failed to sign up. Please try again.');
+      const userMessage = error.response?.data?.message || 'Failed to sign up. Please try again.';
+      toast.error(userMessage);
       throw error;
     } finally {
       setLoading(false);
@@ -75,7 +79,7 @@ export function AuthProvider({ children }) {
   const resetPassword = async (email) => {
     try {
       setLoading(true);
-      await axios.post('https://project-final-a377.onrender.com/api/auth/reset-password', { email });
+      await apiClient.post('/api/auth/reset-password', { email });
       toast.success('Password reset instructions sent to your email!');
       navigate('/login');
     } catch (error) {
@@ -90,8 +94,8 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'https://project-final-a377.onrender.com/api/auth/2fa/setup',
+      const response = await apiClient.post(
+        '/api/auth/2fa/setup',
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -110,8 +114,8 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const authToken = localStorage.getItem('token');
-      await axios.post(
-        'https://project-final-a377.onrender.com/api/auth/2fa/verify',
+      await apiClient.post(
+        '/api/auth/2fa/verify',
         { token },
         {
           headers: { Authorization: `Bearer ${authToken}` }
@@ -133,8 +137,8 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      await axios.post(
-        'https://project-final-a377.onrender.com/api/auth/2fa/disable',
+      await apiClient.post(
+        '/api/auth/2fa/disable',
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
